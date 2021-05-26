@@ -819,7 +819,7 @@ def exec_waypoint_nav_demo(args):
             image_RGB = cv2.resize(image_RGB, (300, 300))
             cv2.imshow("RGB_IMAGE", image_RGB)
             cv2.waitKey(1)
-            traffic_light=detect_on_carla_image(model,image_RGB)
+            traffic_light = detect_on_carla_image(model,image_RGB)
             
 
             # Execute the behaviour and local planning in the current instance
