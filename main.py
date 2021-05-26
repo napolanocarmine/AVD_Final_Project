@@ -777,6 +777,10 @@ def exec_waypoint_nav_demo(args):
         prev_collision_pedestrians = 0
         prev_collision_other       = 0
 
+        count = 0
+        count_red = 0
+        count_green = 0
+
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
@@ -820,6 +824,23 @@ def exec_waypoint_nav_demo(args):
             cv2.imshow("RGB_IMAGE", image_RGB)
             cv2.waitKey(1)
             traffic_light=detect_on_carla_image(model,image_RGB)
+            if (len(traffic_light) != 0):
+                if (traffic_light[0]) == 'stop':
+                    count_red += 1
+                if (traffic_light[0]) == 'go':
+                    count_green += 1
+                if (count_red > 0 and traffic_light[0] == 'stop'):
+                    print('MI STO FERMANDO')
+                    bp._state = 1
+                    count += 1
+                if (count > 900 and bp._state == 1 and traffic_light[0] == 'stop'):
+                    print('SONO FERMO')
+                    bp._state = 2
+                if (count_green > 5 and traffic_light[0] == 'go' and (bp._state == 1 or bp._state == 2)):
+                    bp._state = 3
+                    count = 0
+                    count_red = 0
+                    count_green = 0
             
 
             # Execute the behaviour and local planning in the current instance
