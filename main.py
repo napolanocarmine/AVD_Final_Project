@@ -825,19 +825,20 @@ def exec_waypoint_nav_demo(args):
             cv2.waitKey(1)
             traffic_light=detect_on_carla_image(model,image_RGB)
             if (len(traffic_light) != 0):
-                if (traffic_light[0]) == 'stop':
+                state=traffic_light[0][0]
+                if (state == 'stop'):
                     count_red += 1
-                if (traffic_light[0]) == 'go':
+                if (state == 'go'):
                     count_green += 1
-                if (count_red > 0 and traffic_light[0] == 'stop'):
+                if (count_red > 0 and state == 'stop'):
                     print('MI STO FERMANDO')
                     bp._state = 1
                     count += 1
-                if (count > 900 and bp._state == 1 and traffic_light[0] == 'stop'):
+                if (count > 100 and bp._state == 1 and state == 'stop'):
                     print('SONO FERMO')
                     bp._state = 2
-                if (count_green > 5 and traffic_light[0] == 'go' and (bp._state == 1 or bp._state == 2)):
-                    bp._state = 3
+                if (count_green > 5 and state== 'go' and (bp._state == 1 or bp._state == 2)):
+                    bp._state = 0
                     count = 0
                     count_red = 0
                     count_green = 0

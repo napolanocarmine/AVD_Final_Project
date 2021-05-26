@@ -27,4 +27,4 @@ def detect_on_carla_image(model,carla_image):
         score=round(box.get_score(),4)
         list.append([label,score])
 
-    print(list)
+    return list
