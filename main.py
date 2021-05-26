@@ -49,10 +49,10 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 8          #  spawn index for player
-DESTINATION_INDEX = 15        # Setting a Destination HERE
+PLAYER_START_INDEX = 91          #  spawn index for player
+DESTINATION_INDEX = 56        # Setting a Destination HERE
 NUM_PEDESTRIANS        = 30      # total number of pedestrians to spawn
-NUM_VEHICLES           = 30      # total number of vehicles to spawn
+NUM_VEHICLES           = 100      # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -780,7 +780,7 @@ def exec_waypoint_nav_demo(args):
         count = 0
         count_red = 0
         count_green = 0
-        cane=False
+        traffic_flag=False
 
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
@@ -826,24 +826,26 @@ def exec_waypoint_nav_demo(args):
             cv2.waitKey(1)
             traffic_light=detect_on_carla_image(model,image_RGB)
             if (len(traffic_light) != 0):
+                print(traffic_light)
                 state=traffic_light[0][0]
-                if (state == 'stop'):
+                if (state == 'stop' and traffic_light[0][1]>=0.40):
                     count_red += 1
-                if (state == 'go'):
+                if (traffic_flag==True and state == 'go' and traffic_light[0][1]>=0.30):
                     count_green += 1
-                if (count_red > 0 and state == 'stop'):
+                if (count_red > 5 and state == 'stop'):
                     print('MI STO FERMANDO')
-                    cane=True
+                    traffic_flag=True
                     bp._state = 1
                     count += 1
-                if (count > 100 and bp._state == 1 and state == 'stop'):
+                if (current_speed==1 and bp._state == 1 and state == 'stop'):
                     print('SONO FERMO')
                     bp._state = 2
-                if (count_green > 5 and state== 'go' and (bp._state == 1 or bp._state == 2)):
+                if (count_green > 8 and state== 'go' and (bp._state == 1 or bp._state == 2)):
                     bp._state = 0
                     count = 0
                     count_red = 0
                     count_green = 0
+                    traffic_flag = False
 
 
             # Execute the behaviour and local planning in the current instance
@@ -893,10 +895,10 @@ def exec_waypoint_nav_demo(args):
                     # Compute the velocity profile for the path, and compute the waypoints.
                     desired_speed = bp._goal_state[2]
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
-                    if(cane==True):
+                    if(traffic_flag==True):
 
-                        best_path= [best_path[0][:20],best_path[1][:20],best_path[2][:20]]
-                        print(best_path)
+                        best_path= [best_path[0][:35],best_path[1][:35],best_path[2][:35]]
+                        #print(best_path)
 
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
 
