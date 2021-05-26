@@ -780,6 +780,7 @@ def exec_waypoint_nav_demo(args):
         count = 0
         count_red = 0
         count_green = 0
+        cane=False
 
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
@@ -832,6 +833,7 @@ def exec_waypoint_nav_demo(args):
                     count_green += 1
                 if (count_red > 0 and state == 'stop'):
                     print('MI STO FERMANDO')
+                    cane=True
                     bp._state = 1
                     count += 1
                 if (count > 100 and bp._state == 1 and state == 'stop'):
@@ -842,7 +844,7 @@ def exec_waypoint_nav_demo(args):
                     count = 0
                     count_red = 0
                     count_green = 0
-            
+
 
             # Execute the behaviour and local planning in the current instance
             # Note that updating the local path during every controller update
@@ -891,6 +893,11 @@ def exec_waypoint_nav_demo(args):
                     # Compute the velocity profile for the path, and compute the waypoints.
                     desired_speed = bp._goal_state[2]
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
+                    if(cane==True):
+
+                        best_path= [best_path[0][:20],best_path[1][:20],best_path[2][:20]]
+                        print(best_path)
+
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
 
                     if local_waypoints != None:
