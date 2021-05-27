@@ -337,15 +337,14 @@ def check_traffic_light_state(self, traffic_light, current_speed):
             print('MI STO FERMANDO')
             self._traffic_flag = True
             self._state = DECELERATE_TO_STOP
-            self._count += 1
 
-        if (current_speed==1 and self._state == 1 and state == 'stop'):
+
+        if (current_speed==0.02 and self._state == 1 and state == 'stop'):
             print('SONO FERMO')
             self._state = STAY_STOPPED
 
         if (self._green_count > 8 and state== 'go' and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
             self._state = FOLLOW_LANE
-            self._count = 0
             self._red_count = 0
             self._green_count = 0
             self._traffic_flag = False

@@ -23,8 +23,13 @@ def detect_on_carla_image(model,carla_image):
     for box in netout:
         if box.xmin > image_w or box.xmax > image_w or box.ymin > image_h or box.ymax > image_h:
             continue
+
+        delta_x=((box.xmax*image_w)-(box.xmin*image_w))/2
+        delta_y=((box.ymax*image_h)-(box.ymin*image_h))/2
         label = labels[box.get_label()]
         score=round(box.get_score(),4)
-        list.append([label,score])
+        center_x=int((box.xmin*image_w)+delta_x)
+        center_y=int((box.ymin*image_h)+delta_y)
+        list.append([label,score,center_x,center_y])
 
     return list

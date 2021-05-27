@@ -52,8 +52,8 @@ model = get_model(config)
 ###############################################################################
 PLAYER_START_INDEX     = 91    # spawn index for player
 DESTINATION_INDEX      = 56    # Setting a Destination HERE
-NUM_PEDESTRIANS        = 30    # total number of pedestrians to spawn
-NUM_VEHICLES           = 100   # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 10    # total number of pedestrians to spawn
+NUM_VEHICLES           = 10   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -219,9 +219,14 @@ def make_carla_settings(args):
 
     # Declare here your sensors
     camera0 = Camera('CameraRGB')
-    camera0.set_image_size(1600, 900)
+    camera0.set_image_size(600,600)
     camera0.set_position(0.30, 0, 1.30)
     settings.add_sensor(camera0)
+
+    camera1 = Camera('CameraDepth', PostProcessing='Depth')
+    camera1.set_image_size(600,600)
+    camera1.set_position(0.30, 0, 1.30)
+    settings.add_sensor(camera1)
 
     return settings
 
@@ -826,12 +831,30 @@ def exec_waypoint_nav_demo(args):
             collided_flag_history.append(collided_flag)
 
             image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
-            image_RGB = cv2.resize(image_RGB, (300, 300))
-            cv2.imshow("RGB_IMAGE", image_RGB)
-            cv2.waitKey(1)
+            image_RGB = cv2.resize(image_RGB, (416, 416))
+            #cv2.imshow("RGB_IMAGE", image_RGB)
+            #cv2.waitKey(1)
+            depth_image=image_converter.to_bgra_array(sensor_data["CameraDepth"])
+            depth_image = cv2.resize(depth_image, (416,416))
+
 
         ####################################################################################################################################
             traffic_light=detect_on_carla_image(model,image_RGB)
+            print(traffic_light)
+            if(len(traffic_light)!=0):
+                x=traffic_light[0][2]
+                y=traffic_light[0][3]
+                pixel = depth_image[x][y]
+                B = pixel[0]
+                G = pixel[1]
+                R = pixel[2]
+                normalized = (R + G * 256 + B * 256 * 256) / (256 * 256 * 256 - 1)
+                in_meters = 1000 * normalized
+                print('Ecco la distanza che volevi ', in_meters)
+                depth_image=cv2.circle(depth_image,(x,y),radius=3,color=(255, 255, 255),thickness=-1)
+                cv2.imshow("DEPTH_IMAGE", depth_image)
+                cv2.waitKey(1)
+
 
             check_traffic_light_state(bp, traffic_light, current_speed)
         ####################################################################################################################################
@@ -884,10 +907,23 @@ def exec_waypoint_nav_demo(args):
                     desired_speed = bp._goal_state[2]
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
         ####################################################################################################################################
-                    if(bp._traffic_flag == True):
+                    if(bp._traffic_flag == True and in_meters<=10):
+                        length=0
+                        j=1
+                        for i in range(1,len(best_path[0])):
+                            length=(best_path[0][i]-ego_state[0])**2 + (best_path[1][i]-ego_state[1])**2
+                            length=np.sqrt(length)
+                            if(length<(in_meters-5)):
+                                j=i
+                                continue
+                            else:
+                                if(bp._state==2):
+                                    j=1
+                                    #best_path = [best_path[0][:0], best_path[1][:0], best_path[2][:0]]
+                                best_path = [best_path[0][:j], best_path[1][:j], best_path[2][:j]]
 
-                        best_path= [best_path[0][:35],best_path[1][:35],best_path[2][:35]]
-                        #print(best_path)
+                                break
+
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
 
