@@ -326,7 +326,8 @@ def check_traffic_light_state(self, traffic_light, current_speed):
         print(traffic_light)
 
         state=traffic_light[0][0]
-        if (state == 'stop' and traffic_light[0][1]>=0.40):
+
+        if (state == 'stop' and traffic_light[0][1] >= 0.40):
             self._red_count += 1
 
         if (self._traffic_flag == True and state == 'go' and traffic_light[0][1] >= 0.30):
