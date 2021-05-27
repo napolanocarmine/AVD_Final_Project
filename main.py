@@ -35,6 +35,7 @@ from carla.planner.city_track import CityTrack
 import carla.image_converter as image_converter
 from traffic_light_detection_module.detect_carla_images import *
 from traffic_light_detection_module.predict import *
+from behavioural_planner import check_traffic_light_state
 
 
 ###############################################################################
@@ -514,6 +515,7 @@ def exec_waypoint_nav_demo(args):
         #############################################
         starting    = scene.player_start_spots[PLAYER_START_INDEX]
         destination = scene.player_start_spots[DESTINATION_INDEX]
+        
 
         # Starting position is the current position
         # (x, y, z, pitch, roll, yaw)
@@ -777,10 +779,13 @@ def exec_waypoint_nav_demo(args):
         prev_collision_pedestrians = 0
         prev_collision_other       = 0
 
+        """
+        #IN BEHAVIOURAL PLANNER ?
         count = 0
         count_red = 0
         count_green = 0
         traffic_flag=False
+        """
 
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
@@ -824,29 +829,12 @@ def exec_waypoint_nav_demo(args):
             image_RGB = cv2.resize(image_RGB, (300, 300))
             cv2.imshow("RGB_IMAGE", image_RGB)
             cv2.waitKey(1)
-            traffic_light=detect_on_carla_image(model,image_RGB)
-            if (len(traffic_light) != 0):
-                print(traffic_light)
-                state=traffic_light[0][0]
-                if (state == 'stop' and traffic_light[0][1]>=0.40):
-                    count_red += 1
-                if (traffic_flag==True and state == 'go' and traffic_light[0][1]>=0.30):
-                    count_green += 1
-                if (count_red > 5 and state == 'stop'):
-                    print('MI STO FERMANDO')
-                    traffic_flag=True
-                    bp._state = 1
-                    count += 1
-                if (current_speed==1 and bp._state == 1 and state == 'stop'):
-                    print('SONO FERMO')
-                    bp._state = 2
-                if (count_green > 8 and state== 'go' and (bp._state == 1 or bp._state == 2)):
-                    bp._state = 0
-                    count = 0
-                    count_red = 0
-                    count_green = 0
-                    traffic_flag = False
 
+        ####################################################################################################################################
+            traffic_light=detect_on_carla_image(model,image_RGB)
+
+            check_traffic_light_state(bp, traffic_light, current_speed)
+        ####################################################################################################################################
 
             # Execute the behaviour and local planning in the current instance
             # Note that updating the local path during every controller update
@@ -895,11 +883,12 @@ def exec_waypoint_nav_demo(args):
                     # Compute the velocity profile for the path, and compute the waypoints.
                     desired_speed = bp._goal_state[2]
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
-                    if(traffic_flag==True):
+        ####################################################################################################################################
+                    if(bp._traffic_flag == True):
 
                         best_path= [best_path[0][:35],best_path[1][:35],best_path[2][:35]]
                         #print(best_path)
-
+        ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
 
                     if local_waypoints != None:

@@ -11,6 +11,13 @@ STOP_THRESHOLD = 0.02
 # Number of cycles before moving from stop sign.
 STOP_COUNTS = 10
 
+"""
+count = 0
+count_red = 0
+count_green = 0
+traffic_flag=False
+"""
+
 class BehaviouralPlanner:
     def __init__(self, lookahead, lead_vehicle_lookahead):
         self._lookahead                     = lookahead
@@ -22,6 +29,9 @@ class BehaviouralPlanner:
         self._goal_index                    = 0
         self._stop_count                    = 0
         self._lookahead_collision_index     = 0
+        self._red_count                     = 0
+        self._green_count                   = 0
+        self._traffic_flag                  = False
     
     def set_lookahead(self, lookahead):
         self._lookahead = lookahead
@@ -303,3 +313,38 @@ def pointOnSegment(p1, p2, p3):
         return True
     else:
         return False
+
+    """
+    # State machine states
+    FOLLOW_LANE = 0
+    DECELERATE_TO_STOP = 1
+    STAY_STOPPED = 2
+    """
+
+def check_traffic_light_state(self, traffic_light, current_speed):
+    if (len(traffic_light) != 0):
+        print(traffic_light)
+
+        state=traffic_light[0][0]
+        if (state == 'stop' and traffic_light[0][1]>=0.40):
+            self._red_count += 1
+
+        if (self._traffic_flag == True and state == 'go' and traffic_light[0][1] >= 0.30):
+            self._green_count += 1
+
+        if (self._red_count > 5 and state == 'stop'):
+            print('MI STO FERMANDO')
+            self._traffic_flag = True
+            self._state = DECELERATE_TO_STOP
+            self._count += 1
+
+        if (current_speed==1 and self._state == 1 and state == 'stop'):
+            print('SONO FERMO')
+            self._state = STAY_STOPPED
+
+        if (self._green_count > 8 and state== 'go' and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
+            self._state = FOLLOW_LANE
+            self._count = 0
+            self._red_count = 0
+            self._green_count = 0
+            self._traffic_flag = False
