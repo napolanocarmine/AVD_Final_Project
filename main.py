@@ -905,7 +905,7 @@ def exec_waypoint_nav_demo(args):
                 if best_path is not None:
                     # Compute the velocity profile for the path, and compute the waypoints.
                     desired_speed = bp._goal_state[2]
-                    decelerate_to_stop = bp._state == (behavioural_planner.DECELERATE_TO_STOP or behavioural_planner.STAY_STOPPED)
+                    decelerate_to_stop = (bp._state ==behavioural_planner.DECELERATE_TO_STOP )or (bp._state == behavioural_planner.STAY_STOPPED)
         ####################################################################################################################################
                     if(len(traffic_light)!=0 and bp._traffic_flag == True and in_meters<=15):
                         length=0
