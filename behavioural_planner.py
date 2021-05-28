@@ -122,16 +122,14 @@ class BehaviouralPlanner:
             # passed the stop sign, return to lane following.
             # You should use the get_closest_index(), get_goal_index(), and
             # check_for_stop_signs() helper functions.
-            closest_len, closest_index = get_closest_index(waypoints, ego_state)
-            goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
-            while waypoints[goal_index][2] <= 0.1: goal_index += 1
 
-            # We've stopped for the required amount of time, so the new goal
-            # index for the stop line is not relevant. Use the goal index
-            # that is the lookahead distance away.
 
-            self._goal_index = goal_index
-            self._goal_state = waypoints[goal_index]
+            if (self._green_count > 8 and state2 == 'go' and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
+                print('RIPARTO')
+                self._state = FOLLOW_LANE
+                self._red_count = 0
+                self._green_count = 0
+                self._traffic_flag = False
 
 
 
@@ -322,12 +320,13 @@ def pointOnSegment(p1, p2, p3):
     DECELERATE_TO_STOP = 1
     STAY_STOPPED = 2
     """
-
+state2=0
 def check_traffic_light_state(self, traffic_light, current_speed):
     if (len(traffic_light) != 0):
         #print(traffic_light)
 
         state=traffic_light[0][0]
+        state2=state
 
         if (state == 'stop' and traffic_light[0][1] >= 0.35):
             self._red_count += 1
@@ -335,20 +334,14 @@ def check_traffic_light_state(self, traffic_light, current_speed):
         if (self._traffic_flag == True and state == 'go' and traffic_light[0][1] >= 0.30):
             self._green_count += 1
 
-        if (current_speed <= 0.02 and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED) and state == 'stop'):
-            print('SONO FERMO')
-            self._state = STAY_STOPPED
 
-        elif (self._state !=STAY_STOPPED  and self._red_count > 5 and state == 'stop'):
+        if (self._state !=STAY_STOPPED  and self._red_count > 5 and state == 'stop'):
             print('MI STO FERMANDO')
             self._traffic_flag = True
             self._state = DECELERATE_TO_STOP
+            if (current_speed <= 0.5 and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED) and state == 'stop'):
+                print('SONO FERMO')
+                self._state = STAY_STOPPED
 
 
 
-        if (self._green_count > 8 and state== 'go' and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
-            print('RIPARTO')
-            self._state = FOLLOW_LANE
-            self._red_count = 0
-            self._green_count = 0
-            self._traffic_flag = False

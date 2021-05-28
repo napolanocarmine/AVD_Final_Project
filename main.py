@@ -905,7 +905,7 @@ def exec_waypoint_nav_demo(args):
                 if best_path is not None:
                     # Compute the velocity profile for the path, and compute the waypoints.
                     desired_speed = bp._goal_state[2]
-                    decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
+                    decelerate_to_stop = bp._state == (behavioural_planner.DECELERATE_TO_STOP or behavioural_planner.STAY_STOPPED)
         ####################################################################################################################################
                     if(len(traffic_light)!=0 and bp._traffic_flag == True and in_meters<=15):
                         length=0
@@ -913,7 +913,7 @@ def exec_waypoint_nav_demo(args):
                         for i in range(1,len(best_path[0])):
                             length=(best_path[0][i]-ego_state[0])**2 + (best_path[1][i]-ego_state[1])**2
                             length=np.sqrt(length)
-                            if(length<(in_meters-3) and bp._state!=2):
+                            if(length<(in_meters-3)):
                                 print(length)
                                 continue
                             else:
