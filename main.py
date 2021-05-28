@@ -50,8 +50,8 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 91    # spawn index for player
-DESTINATION_INDEX      = 56    # Setting a Destination HERE
+PLAYER_START_INDEX     = 11    # spawn index for player
+DESTINATION_INDEX      = 134    # Setting a Destination HERE
 NUM_PEDESTRIANS        = 10    # total number of pedestrians to spawn
 NUM_VEHICLES           = 10   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
@@ -830,38 +830,7 @@ def exec_waypoint_nav_demo(args):
                                                  prev_collision_other)
             collided_flag_history.append(collided_flag)
 
-            image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
-            image_RGB = cv2.resize(image_RGB, (416, 416))
-            #cv2.imshow("RGB_IMAGE", image_RGB)
-            #cv2.waitKey(1)
-            depth_image=image_converter.to_bgra_array(sensor_data["CameraDepth"])
-            depth_image = cv2.resize(depth_image, (416,416))
-
-
-        ####################################################################################################################################
-            traffic_light=detect_on_carla_image(model,image_RGB)
-            #print(traffic_light)
-
-            #Computing of the distance from the traffic light using a depth camera
-            if(len(traffic_light)!=0):
-                x=traffic_light[0][2]
-                y=traffic_light[0][3]
-                pixel = depth_image[x][y]
-                B = pixel[0]
-                G = pixel[1]
-                R = pixel[2]
-                normalized = (R + G * 256 + B * 256 * 256) / (256 * 256 * 256 - 1)
-                #Computing in meter the distance from the traffic light
-                distance_from_traffic_light = 1000 * normalized
-                #print('Ecco la distanza che volevi ', distance_from_traffic_light)
-                depth_image=cv2.circle(depth_image,(x,y),radius=3,color=(255, 255, 255),thickness=-1)
-                #Visualization of the taken depth image
-                #cv2.imshow("DEPTH_IMAGE", depth_image)
-                #cv2.waitKey(1)
-
-
-            check_traffic_light_state(bp, traffic_light, current_speed)
-        ####################################################################################################################################
+            
 
             # Execute the behaviour and local planning in the current instance
             # Note that updating the local path during every controller update
@@ -871,7 +840,43 @@ def exec_waypoint_nav_demo(args):
             # stored in the variable LP_FREQUENCY_DIVISOR, as it is analogous
             # to be operating at a frequency that is a division to the 
             # simulation frequency.
+
+            ##########################################################################################
+            ##########################################################################################
+            ##########################################################################################
             if frame % LP_FREQUENCY_DIVISOR == 0:
+
+                image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
+            
+                image_RGB = cv2.resize(image_RGB, (416, 416))
+                #cv2.imshow("RGB_IMAGE", image_RGB)
+                #cv2.waitKey(1)
+                depth_image=image_converter.to_bgra_array(sensor_data["CameraDepth"])
+                depth_image = cv2.resize(depth_image, (416,416))
+                
+                traffic_light=detect_on_carla_image(model,image_RGB)
+                #print(traffic_light)
+
+                #Computing of the distance from the traffic light using a depth camera
+                if(len(traffic_light)!=0):
+                    x=traffic_light[0][2]
+                    y=traffic_light[0][3]
+                    pixel = depth_image[x][y]
+                    B = pixel[0]
+                    G = pixel[1]
+                    R = pixel[2]
+                    normalized = (R + G * 256 + B * 256 * 256) / (256 * 256 * 256 - 1)
+                    #Computing in meter the distance from the traffic light
+                    distance_from_traffic_light = 1000 * normalized
+                    #print('Ecco la distanza che volevi ', distance_from_traffic_light)
+                    #depth_image=cv2.circle(depth_image,(x,y),radius=3,color=(255, 255, 255),thickness=-1)
+                    #Visualization of the taken depth image
+                    #cv2.imshow("DEPTH_IMAGE", depth_image)
+                    #cv2.waitKey(1)
+
+                if (len(traffic_light) != 0):
+                    check_traffic_light_state(bp, traffic_light, current_speed)
+            ####################################################################################################################################
                 # Compute open loop speed estimate.
                 open_loop_speed = lp._velocity_planner.get_open_loop_speed(current_timestamp - prev_timestamp)
 
@@ -920,14 +925,14 @@ def exec_waypoint_nav_demo(args):
 
                         if bp._state == behavioural_planner.STAY_STOPPED:
                             desired_speed = 0
-                    #and distance_from_traffic_light <= 20):
-                        distance=0
-                        j = 2
+                        #and distance_from_traffic_light <= 20):
+                        #distance=0
+                        #j = 2
 
                         if prev_distance_traffic > distance_from_traffic_light:
                             prev_distance_traffic = distance_from_traffic_light
 
-                        if distance < (prev_distance_traffic - 5):
+                        if prev_distance_traffic <= 10:
                             best_path = lp._prev_best_path
                             for i in range(0,len(best_path[2])):
                                 best_path[2][i] = 0

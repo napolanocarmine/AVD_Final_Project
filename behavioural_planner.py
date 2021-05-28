@@ -31,6 +31,7 @@ class BehaviouralPlanner:
         self._lookahead_collision_index     = 0
         self._red_count                     = 0
         self._green_count                   = 0
+        self._count                         = 0
         self._traffic_flag                  = False
         self._traffic_light_state           = ''
     
@@ -335,16 +336,22 @@ def pointOnSegment(p1, p2, p3):
 
 def check_traffic_light_state(self, traffic_light, current_speed):
     
+    self._count +=1
     
+    if self._red_count == 1 and self._count > 15:
+        self._count = 0 
+        self._red_count = 0
+
     if (len(traffic_light) != 0):
         #print(traffic_light)
 
         self._traffic_light_state=traffic_light[0][0]
 
-        if (self._traffic_light_state == 'stop' and traffic_light[0][1] >= 0.25):
+        if (self._traffic_light_state == 'stop' and traffic_light[0][1] >= 0.20):
             self._red_count += 1
+            self._count = 0 
 
-            if (self._red_count > 5 and self._state != STAY_STOPPED):
+            if (self._red_count > 2 and self._state != STAY_STOPPED):
                 print('DECELERATE TO STOP')
                 self._traffic_flag = True
                 self._state = DECELERATE_TO_STOP
