@@ -840,7 +840,7 @@ def exec_waypoint_nav_demo(args):
 
         ####################################################################################################################################
             traffic_light=detect_on_carla_image(model,image_RGB)
-            print(traffic_light)
+            #print(traffic_light)
             if(len(traffic_light)!=0):
                 x=traffic_light[0][2]
                 y=traffic_light[0][3]
@@ -907,26 +907,25 @@ def exec_waypoint_nav_demo(args):
                     desired_speed = bp._goal_state[2]
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
         ####################################################################################################################################
-                    if(bp._traffic_flag == True and in_meters<=10):
+                    if(len(traffic_light)!=0 and bp._traffic_flag == True and in_meters<=15):
                         length=0
                         j=1
                         for i in range(1,len(best_path[0])):
                             length=(best_path[0][i]-ego_state[0])**2 + (best_path[1][i]-ego_state[1])**2
                             length=np.sqrt(length)
-                            if(length<(in_meters-5)):
-                                j=i
+                            if(length<(in_meters-3) and bp._state!=2):
+                                print(length)
                                 continue
                             else:
-                                if(bp._state==2):
-                                    j=1
-                                    #best_path = [best_path[0][:0], best_path[1][:0], best_path[2][:0]]
-                                best_path = [best_path[0][:j], best_path[1][:j], best_path[2][:j]]
-
-                                break
+                                if(bp._state==2 and traffic_light[0][0] =='stop'):
+                                    best_path = []
+                                    break
+                                if(bp._state==2 and traffic_light[0][0] =='go'):
+                                    best_path = [best_path[0][:i+3], best_path[1][:i+3], best_path[2][:i+3]]
+                                    break
 
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
-
                     if local_waypoints != None:
                         # Update the controller waypoint path with the best local path.
                         # This controller is similar to that developed in Course 1 of this
@@ -962,6 +961,7 @@ def exec_waypoint_nav_demo(args):
                                 next_wp_vector = INTERP_DISTANCE_RES * float(j+1) * wp_uvector
                                 wp_interp.append(list(local_waypoints_np[i] + next_wp_vector))
                         # add last waypoint at the end
+
                         wp_interp.append(list(local_waypoints_np[-1]))
                         
                         # Update the other controller values and controls
@@ -1035,7 +1035,7 @@ def exec_waypoint_nav_demo(args):
                 path_indices = np.floor(np.linspace(0, 
                                                     wp_interp_np.shape[0]-1,
                                                     INTERP_MAX_POINTS_PLOT))
-                trajectory_fig.update("selected_path", 
+                trajectory_fig.update("selected_path",
                         wp_interp_np[path_indices.astype(int), 0],
                         wp_interp_np[path_indices.astype(int), 1],
                         new_colour=[1, 0.5, 0.0])
