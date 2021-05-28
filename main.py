@@ -35,7 +35,7 @@ from carla.planner.city_track import CityTrack
 import carla.image_converter as image_converter
 from traffic_light_detection_module.detect_carla_images import *
 from traffic_light_detection_module.predict import *
-from behavioural_planner import check_traffic_light_state
+from behavioural_planner import DECELERATE_TO_STOP, STAY_STOPPED, check_traffic_light_state
 
 
 ###############################################################################
@@ -840,7 +840,9 @@ def exec_waypoint_nav_demo(args):
 
         ####################################################################################################################################
             traffic_light=detect_on_carla_image(model,image_RGB)
-            print(traffic_light)
+            #print(traffic_light)
+
+            #Computing of the distance from the traffic light using a depth camera
             if(len(traffic_light)!=0):
                 x=traffic_light[0][2]
                 y=traffic_light[0][3]
@@ -849,11 +851,13 @@ def exec_waypoint_nav_demo(args):
                 G = pixel[1]
                 R = pixel[2]
                 normalized = (R + G * 256 + B * 256 * 256) / (256 * 256 * 256 - 1)
-                in_meters = 1000 * normalized
-                print('Ecco la distanza che volevi ', in_meters)
+                #Computing in meter the distance from the traffic light
+                distance_from_traffic_light = 1000 * normalized
+                #print('Ecco la distanza che volevi ', distance_from_traffic_light)
                 depth_image=cv2.circle(depth_image,(x,y),radius=3,color=(255, 255, 255),thickness=-1)
-                cv2.imshow("DEPTH_IMAGE", depth_image)
-                cv2.waitKey(1)
+                #Visualization of the taken depth image
+                #cv2.imshow("DEPTH_IMAGE", depth_image)
+                #cv2.waitKey(1)
 
 
             check_traffic_light_state(bp, traffic_light, current_speed)
@@ -905,25 +909,31 @@ def exec_waypoint_nav_demo(args):
                 if best_path is not None:
                     # Compute the velocity profile for the path, and compute the waypoints.
                     desired_speed = bp._goal_state[2]
+                    #decelerate_to_stop = (bp._state == behavioural_planner.DECELERATE_TO_STOP or bp._state == behavioural_planner.STAY_STOPPED)
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
         ####################################################################################################################################
-                    if(bp._traffic_flag == True and in_meters<=10):
-                        length=0
-                        j=1
-                        for i in range(1,len(best_path[0])):
-                            length=(best_path[0][i]-ego_state[0])**2 + (best_path[1][i]-ego_state[1])**2
-                            length=np.sqrt(length)
-                            if(length<(in_meters-5)):
-                                j=i
-                                continue
-                            else:
-                                if(bp._state==2):
-                                    j=1
-                                    #best_path = [best_path[0][:0], best_path[1][:0], best_path[2][:0]]
-                                best_path = [best_path[0][:j], best_path[1][:j], best_path[2][:j]]
+                    prev_distance_traffic = 500
+                    print('STATO: ' + str(bp._state))
 
-                                break
+                    #Setting also the distance threshold from the traffic light in the if statement
+                    if(bp._traffic_flag == True):
 
+                        if bp._state == behavioural_planner.STAY_STOPPED:
+                            desired_speed = 0
+                    #and distance_from_traffic_light <= 20):
+                        distance=0
+                        j = 2
+
+                        if prev_distance_traffic > distance_from_traffic_light:
+                            prev_distance_traffic = distance_from_traffic_light
+
+                        if distance < (prev_distance_traffic - 5):
+                            best_path = lp._prev_best_path
+                            for i in range(0,len(best_path[2])):
+                                best_path[2][i] = 0
+
+                        print('PREV_DISTANCE: ' + str(prev_distance_traffic))
+                        
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
 
@@ -980,7 +990,7 @@ def exec_waypoint_nav_demo(args):
                 cmd_throttle = 0.0
                 cmd_steer = 0.0
                 cmd_brake = 0.0
-
+            """
             # Skip the first frame or if there exists no local paths
             if skip_first_frame and frame == 0:
                 pass
@@ -1048,7 +1058,7 @@ def exec_waypoint_nav_demo(args):
                     lp_traj.refresh()
                     lp_1d.refresh()
                     live_plot_timer.lap()
-
+                """
             # Output controller command to CARLA server
             send_control_command(client,
                                  throttle=cmd_throttle,
@@ -1083,7 +1093,7 @@ def exec_waypoint_nav_demo(args):
         write_trajectory_file(x_history, y_history, speed_history, time_history,
                               collided_flag_history)
         write_collisioncount_file(collided_flag_history)
-    
+
 def main():
     """Main function.
 
