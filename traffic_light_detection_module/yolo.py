@@ -155,6 +155,7 @@ class YOLO(object):
         
         boxes = decode_netout(netout=netout, anchors = self.anchors, nb_class=self.nb_class,
                               obj_threshold=self.obj_thresh, nms_threshold=self.nms_thresh)
+
         return boxes
         
 

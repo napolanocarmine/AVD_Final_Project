@@ -35,6 +35,7 @@ from carla.planner.city_track import CityTrack
 import carla.image_converter as image_converter
 from traffic_light_detection_module.detect_carla_images import *
 from traffic_light_detection_module.predict import *
+from behavioural_planner import DECELERATE_TO_STOP, STAY_STOPPED, check_traffic_light_state
 
 
 ###############################################################################
@@ -49,11 +50,11 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX = 8          #  spawn index for player
-DESTINATION_INDEX = 15        # Setting a Destination HERE
-NUM_PEDESTRIANS        = 30      # total number of pedestrians to spawn
-NUM_VEHICLES           = 30      # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
+PLAYER_START_INDEX     = 91    # spawn index for player
+DESTINATION_INDEX      = 56    # Setting a Destination HERE
+NUM_PEDESTRIANS        = 10    # total number of pedestrians to spawn
+NUM_VEHICLES           = 10   # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
 ###############################################################################àà
 
@@ -218,9 +219,14 @@ def make_carla_settings(args):
 
     # Declare here your sensors
     camera0 = Camera('CameraRGB')
-    camera0.set_image_size(1600, 900)
+    camera0.set_image_size(600,600)
     camera0.set_position(0.30, 0, 1.30)
     settings.add_sensor(camera0)
+
+    camera1 = Camera('CameraDepth', PostProcessing='Depth')
+    camera1.set_image_size(600,600)
+    camera1.set_position(0.30, 0, 1.30)
+    settings.add_sensor(camera1)
 
     return settings
 
@@ -514,6 +520,7 @@ def exec_waypoint_nav_demo(args):
         #############################################
         starting    = scene.player_start_spots[PLAYER_START_INDEX]
         destination = scene.player_start_spots[DESTINATION_INDEX]
+        
 
         # Starting position is the current position
         # (x, y, z, pitch, roll, yaw)
@@ -777,6 +784,14 @@ def exec_waypoint_nav_demo(args):
         prev_collision_pedestrians = 0
         prev_collision_other       = 0
 
+        """
+        #IN BEHAVIOURAL PLANNER ?
+        count = 0
+        count_red = 0
+        count_green = 0
+        traffic_flag=False
+        """
+
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
@@ -816,11 +831,38 @@ def exec_waypoint_nav_demo(args):
             collided_flag_history.append(collided_flag)
 
             image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
-            image_RGB = cv2.resize(image_RGB, (300, 300))
-            cv2.imshow("RGB_IMAGE", image_RGB)
-            cv2.waitKey(1)
-            traffic_light = detect_on_carla_image(model,image_RGB)
             
+            image_RGB = cv2.resize(image_RGB, (416, 416))
+            #cv2.imshow("RGB_IMAGE", image_RGB)
+            #cv2.waitKey(1)
+            depth_image=image_converter.to_bgra_array(sensor_data["CameraDepth"])
+            depth_image = cv2.resize(depth_image, (416,416))
+
+
+        ####################################################################################################################################
+            traffic_light=detect_on_carla_image(model,image_RGB)
+            #print(traffic_light)
+
+            #Computing of the distance from the traffic light using a depth camera
+            if(len(traffic_light)!=0):
+                x=traffic_light[0][2]
+                y=traffic_light[0][3]
+                pixel = depth_image[x][y]
+                B = pixel[0]
+                G = pixel[1]
+                R = pixel[2]
+                normalized = (R + G * 256 + B * 256 * 256) / (256 * 256 * 256 - 1)
+                #Computing in meter the distance from the traffic light
+                distance_from_traffic_light = 1000 * normalized
+                #print('Ecco la distanza che volevi ', distance_from_traffic_light)
+                depth_image=cv2.circle(depth_image,(x,y),radius=3,color=(255, 255, 255),thickness=-1)
+                #Visualization of the taken depth image
+                #cv2.imshow("DEPTH_IMAGE", depth_image)
+                #cv2.waitKey(1)
+
+
+            check_traffic_light_state(bp, traffic_light, current_speed)
+        ####################################################################################################################################
 
             # Execute the behaviour and local planning in the current instance
             # Note that updating the local path during every controller update
@@ -868,7 +910,32 @@ def exec_waypoint_nav_demo(args):
                 if best_path is not None:
                     # Compute the velocity profile for the path, and compute the waypoints.
                     desired_speed = bp._goal_state[2]
+                    #decelerate_to_stop = (bp._state == behavioural_planner.DECELERATE_TO_STOP or bp._state == behavioural_planner.STAY_STOPPED)
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
+        ####################################################################################################################################
+                    prev_distance_traffic = 500
+                    print('STATO: ' + str(bp._state))
+
+                    #Setting also the distance threshold from the traffic light in the if statement
+                    if(bp._traffic_flag == True):
+
+                        if bp._state == behavioural_planner.STAY_STOPPED:
+                            desired_speed = 0
+                    #and distance_from_traffic_light <= 20):
+                        distance=0
+                        j = 2
+
+                        if prev_distance_traffic > distance_from_traffic_light:
+                            prev_distance_traffic = distance_from_traffic_light
+
+                        if distance < (prev_distance_traffic - 5):
+                            best_path = lp._prev_best_path
+                            for i in range(0,len(best_path[2])):
+                                best_path[2][i] = 0
+
+                        print('PREV_DISTANCE: ' + str(prev_distance_traffic))
+                        
+        ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
 
                     if local_waypoints != None:
@@ -924,7 +991,7 @@ def exec_waypoint_nav_demo(args):
                 cmd_throttle = 0.0
                 cmd_steer = 0.0
                 cmd_brake = 0.0
-
+            """
             # Skip the first frame or if there exists no local paths
             if skip_first_frame and frame == 0:
                 pass
@@ -992,7 +1059,7 @@ def exec_waypoint_nav_demo(args):
                     lp_traj.refresh()
                     lp_1d.refresh()
                     live_plot_timer.lap()
-
+                """
             # Output controller command to CARLA server
             send_control_command(client,
                                  throttle=cmd_throttle,
@@ -1027,7 +1094,7 @@ def exec_waypoint_nav_demo(args):
         write_trajectory_file(x_history, y_history, speed_history, time_history,
                               collided_flag_history)
         write_collisioncount_file(collided_flag_history)
-    
+
 def main():
     """Main function.
 

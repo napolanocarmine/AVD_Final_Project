@@ -17,7 +17,7 @@ def get_model(config):
     )
     #model.load_weights(os.path.join(BASE_DIR, config['model']['saved_model_name']))
     print("Loading Weights")
-    model.model.load_weights("traffic_light_detection_module/traffic-light-detection.h5")
+    model.model.load_weights("traffic_light_detection_module/checkpoints/traffic-light-detection.h5")
     print("Model created")
     return model
 
