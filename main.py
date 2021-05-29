@@ -50,9 +50,9 @@ model = get_model(config)
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
 PLAYER_START_INDEX     = 51    # spawn index for player
-DESTINATION_INDEX      = 99    # Setting a Destination HERE
-NUM_PEDESTRIANS        = 10    # total number of pedestrians to spawn
-NUM_VEHICLES           = 10   # total number of vehicles to spawn
+DESTINATION_INDEX      = 62    # Setting a Destination HERE
+NUM_PEDESTRIANS        = 50    # total number of pedestrians to spawn
+NUM_VEHICLES           = 50   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -855,7 +855,7 @@ def exec_waypoint_nav_demo(args):
             ##########################################################################################
             ##########################################################################################
             if frame % LP_FREQUENCY_DIVISOR == 0:
-                """
+                
                 image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
             
                 image_RGB = cv2.resize(image_RGB, (416, 416))
@@ -883,8 +883,8 @@ def exec_waypoint_nav_demo(args):
                     #Visualization of the taken depth image
                     #cv2.imshow("DEPTH_IMAGE", depth_image)
                     #cv2.waitKey(1)
-                """
-                traffic_light = []
+                
+                
                 #Recovering information about pedestrians and other vehicles
                 for agent in measurement_data.non_player_agents:
                     if agent.HasField('vehicle'):
