@@ -894,23 +894,22 @@ def exec_waypoint_nav_demo(args):
                         collision_pedestrians.append(agent)
                         #print('PEDESTRIAN')
                 
+                # Taking the vehicles from the world
                 for agent in collision_vehicles:
                     location = agent.vehicle.transform.location
                     dimension = agent.vehicle.bounding_box.extent
                     orientation = agent.vehicle.transform.rotation
                     obstacles.append(obstacle_to_world(location, dimension, orientation))
-                    print('LOCATION ' + str(location))
 
-                obstacles = np.asarray(obstacles)    
-                    
-                #print('OBSTACLES: ' + str(obstacles))
-
-
+                # Taking the pedestrians from the world
                 for agent in collision_pedestrians:
-                    pos = agent.pedestrian.transform.location
-                    print('POS PEDESTRIAN: ' + str(pos) + ' ' + str(agent.id))    
+                    location = agent.pedestrian.transform.location
+                    dimension = agent.pedestrian.bounding_box.extent
+                    orientation = agent.pedestrian.transform.rotation
+                    obstacles.append(obstacle_to_world(location, dimension, orientation))
 
-                
+                # Conversion to np array for plotting
+                obstacles = np.asarray(obstacles)
 
                 check_traffic_light_state(bp, traffic_light, current_speed)
             ####################################################################################################################################
