@@ -49,8 +49,8 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 51    # spawn index for player
-DESTINATION_INDEX      = 99    # Setting a Destination HERE
+PLAYER_START_INDEX     = 11    # spawn index for player
+DESTINATION_INDEX      = 134    # Setting a Destination HERE
 NUM_PEDESTRIANS        = 10    # total number of pedestrians to spawn
 NUM_VEHICLES           = 10   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
@@ -68,7 +68,7 @@ CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
 ###############################################################################
 # CONFIGURABLE PARAMENTERS OF TRAFFIC LIGHT MANAGEMENT
 ###############################################################################
-MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 3
+MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 1
 MAX_DISTANCE_FROM_TRAFFIC_LIGHT = 10
 SHORT_DISTANCE_COUNTER_THRESHOLD = 2
 SAME_DISTANCE_COUNTER_THRESHOLD = 2
@@ -949,10 +949,12 @@ def exec_waypoint_nav_demo(args):
                                 #best_path = [lp._prev_best_path[0][:INDEX_CUT_PATH],lp._prev_best_path[1][:INDEX_CUT_PATH],lp._prev_best_path[2][:INDEX_CUT_PATH]]
                                 for i in range(0, len(best_path[2])):
                                     if np.sqrt((best_path[i][0] - ego_state[0])**2 + (best_path[i][1] - ego_state[1])**2) > prev_distance_traffic:
-                                        best_path = [lp._prev_best_path[0][:i+3],lp._prev_best_path[1][:i+3],lp._prev_best_path[2][:i+3]]
+                                        best_path = [lp._prev_best_path[0][:i+3],lp._prev_best_path[1][:i+3],lp._prev_best_path[2][:i+1]]
                                         break
+                    elif(bp._traffic_flag == False):
+                        prev_distance_traffic = 500
 
-                        print('PREV_DISTANCE: ' + str(prev_distance_traffic))
+                    print('PREV_DISTANCE: ' + str(prev_distance_traffic))
                         
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
