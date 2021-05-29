@@ -49,8 +49,8 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 11    # spawn index for player
-DESTINATION_INDEX      = 134    # Setting a Destination HERE
+PLAYER_START_INDEX     = 51    # spawn index for player
+DESTINATION_INDEX      = 99    # Setting a Destination HERE
 NUM_PEDESTRIANS        = 10    # total number of pedestrians to spawn
 NUM_VEHICLES           = 10   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
@@ -799,12 +799,15 @@ def exec_waypoint_nav_demo(args):
         counter_same_distance   = 0
         prev_distance_traffic   = 500
 
+
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
 
             # UPDATE HERE the obstacles list
             obstacles = []
+            collision_vehicles = []
+            collision_pedestrians = []
 
             # Update pose and timestamp
             prev_timestamp = current_timestamp
@@ -852,7 +855,7 @@ def exec_waypoint_nav_demo(args):
             ##########################################################################################
             ##########################################################################################
             if frame % LP_FREQUENCY_DIVISOR == 0:
-
+                """
                 image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
             
                 image_RGB = cv2.resize(image_RGB, (416, 416))
@@ -880,7 +883,34 @@ def exec_waypoint_nav_demo(args):
                     #Visualization of the taken depth image
                     #cv2.imshow("DEPTH_IMAGE", depth_image)
                     #cv2.waitKey(1)
+                """
+                traffic_light = []
+                #Recovering information about pedestrians and other vehicles
+                for agent in measurement_data.non_player_agents:
+                    if agent.HasField('vehicle'):
+                        collision_vehicles.append(agent)
+                        #print('VEHICLE')
+                    if agent.HasField('pedestrian'):
+                        collision_pedestrians.append(agent)
+                        #print('PEDESTRIAN')
+                
+                for agent in collision_vehicles:
+                    location = agent.vehicle.transform.location
+                    dimension = agent.vehicle.bounding_box.extent
+                    orientation = agent.vehicle.transform.rotation
+                    obstacles.append(obstacle_to_world(location, dimension, orientation))
+                    print('LOCATION ' + str(location))
 
+                obstacles = np.asarray(obstacles)    
+                    
+                #print('OBSTACLES: ' + str(obstacles))
+
+
+                for agent in collision_pedestrians:
+                    pos = agent.pedestrian.transform.location
+                    print('POS PEDESTRIAN: ' + str(pos) + ' ' + str(agent.id))    
+
+                
 
                 check_traffic_light_state(bp, traffic_light, current_speed)
             ####################################################################################################################################
@@ -1012,7 +1042,7 @@ def exec_waypoint_nav_demo(args):
                 cmd_throttle = 0.0
                 cmd_steer = 0.0
                 cmd_brake = 0.0
-            """
+            
             # Skip the first frame or if there exists no local paths
             if skip_first_frame and frame == 0:
                 pass
@@ -1080,7 +1110,7 @@ def exec_waypoint_nav_demo(args):
                     lp_traj.refresh()
                     lp_1d.refresh()
                     live_plot_timer.lap()
-                """
+                
             # Output controller command to CARLA server
             send_control_command(client,
                                  throttle=cmd_throttle,
