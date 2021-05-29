@@ -144,7 +144,7 @@ class BehaviouralPlanner:
             
             #if not stop_sign_found: self._state = FOLLOW_LANE
 
-            if ((self._green_count > 10 and self._traffic_light_state == 'go') or self._red_count == 0 and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
+            if ((self._green_count > 10  and self._traffic_light_state == 'go') or self._red_count==0 and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
                 print('FOLLOW LANE')
                 self._state = FOLLOW_LANE
                 self._red_count = 0
@@ -337,13 +337,10 @@ def pointOnSegment(p1, p2, p3):
 def check_traffic_light_state(self, traffic_light, current_speed):
     
     self._count +=1
-    #self._prev_traffic_light_state = self._traffic_light_state
-    #print('RED COUNT: ' + str(self._red_count))
     
-    if self._red_count > 0 and self._count > 15:
+    if self._red_count >0 and self._count > 15:
         self._count = 0 
         self._red_count = 0
-        print('STATO azzeramento contatori #########################: ' + str(self._state))
 
     if (len(traffic_light) != 0):
         #print(traffic_light)
@@ -354,7 +351,7 @@ def check_traffic_light_state(self, traffic_light, current_speed):
             self._red_count += 1
             self._count = 0 
 
-            if (self._red_count >= 3 and self._state != STAY_STOPPED):
+            if (self._red_count > 2 and self._state != STAY_STOPPED):
                 print('DECELERATE TO STOP')
                 self._traffic_flag = True
                 self._state = DECELERATE_TO_STOP
@@ -367,12 +364,3 @@ def check_traffic_light_state(self, traffic_light, current_speed):
 
         elif (self._traffic_flag == True and self._traffic_light_state == 'go' and traffic_light[0][1] >= 0.25):
             self._green_count += 1
-
-    else:
-        self._count += 1
-
-
-def is_changed(prev_state, current_state):
-    if prev_state == current_state:
-        return True
-    return False

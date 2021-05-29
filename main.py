@@ -66,6 +66,8 @@ CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
                                 # used to make sure the server loads
                                 # consistently
 
+
+
 WEATHERID = {
     "DEFAULT": 0,
     "CLEARNOON": 1,
@@ -106,9 +108,9 @@ TIME_GAP               = 1.0              # s
 PATH_SELECT_WEIGHT     = 10
 A_MAX                  = 2.5              # m/s^2
 SLOW_SPEED             = 2.0              # m/s
-STOP_LINE_BUFFER       = 3.5              # m
+STOP_LINE_BUFFER       = 0              # m
 LEAD_VEHICLE_LOOKAHEAD = 20.0             # m
-LP_FREQUENCY_DIVISOR   = 2                # Frequency divisor to make the 
+LP_FREQUENCY_DIVISOR   = 2                # Frequency divisor to make the
                                           # local planner operate at a lower
                                           # frequency than the controller
                                           # (which operates at the simulation
@@ -790,11 +792,10 @@ def exec_waypoint_nav_demo(args):
         count_red = 0
         count_green = 0
         traffic_flag=False
-
         """
-        
-        prev_distance_traffic = 500
-        
+        counter_short_distance=0
+        counter_same_distance = 0
+        prev_distance_traffic=500
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
@@ -877,9 +878,8 @@ def exec_waypoint_nav_demo(args):
                     #cv2.imshow("DEPTH_IMAGE", depth_image)
                     #cv2.waitKey(1)
 
-                
+
                 check_traffic_light_state(bp, traffic_light, current_speed)
-                
             ####################################################################################################################################
                 # Compute open loop speed estimate.
                 open_loop_speed = lp._velocity_planner.get_open_loop_speed(current_timestamp - prev_timestamp)
@@ -921,7 +921,6 @@ def exec_waypoint_nav_demo(args):
                     #decelerate_to_stop = (bp._state == behavioural_planner.DECELERATE_TO_STOP or bp._state == behavioural_planner.STAY_STOPPED)
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
         ####################################################################################################################################
-                    
                     print('STATO: ' + str(bp._state))
 
                     #Setting also the distance threshold from the traffic light in the if statement
@@ -929,19 +928,24 @@ def exec_waypoint_nav_demo(args):
 
                         if bp._state == behavioural_planner.STAY_STOPPED:
                             desired_speed = 0
-                        #and distance_from_traffic_light <= 20):
-                        #distance=0
-                        #j = 2
 
                         if prev_distance_traffic > distance_from_traffic_light:
-                            prev_distance_traffic = distance_from_traffic_light
-                        
-                        
-                        if prev_distance_traffic <= 10:
+                            counter_same_distance+=1
+                            if counter_same_distance >2:
+                                counter_same_distance=0
+                                prev_distance_traffic = distance_from_traffic_light
+
+                        if prev_distance_traffic <= 10  and prev_distance_traffic > 1:
                             best_path = lp._prev_best_path
                             for i in range(0,len(best_path[2])):
                                 best_path[2][i] = 0
-                        
+                        if prev_distance_traffic <=1:
+                            counter_short_distance+=1
+                            if counter_short_distance>=2:
+                                counter_short_distance=0
+                                best_path = [lp._prev_best_path[0][:5],lp._prev_best_path[1][:5],lp._prev_best_path[2][:5]]
+                                for i in range(0, len(best_path[2])):
+                                    best_path[2][i] = 0
 
                         print('PREV_DISTANCE: ' + str(prev_distance_traffic))
                         
