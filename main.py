@@ -50,8 +50,8 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 11    # spawn index for player
-DESTINATION_INDEX      = 134    # Setting a Destination HERE
+PLAYER_START_INDEX     = 51    # spawn index for player
+DESTINATION_INDEX      = 99    # Setting a Destination HERE
 NUM_PEDESTRIANS        = 10    # total number of pedestrians to spawn
 NUM_VEHICLES           = 10   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
@@ -790,8 +790,11 @@ def exec_waypoint_nav_demo(args):
         count_red = 0
         count_green = 0
         traffic_flag=False
-        """
 
+        """
+        
+        prev_distance_traffic = 500
+        
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
@@ -874,8 +877,9 @@ def exec_waypoint_nav_demo(args):
                     #cv2.imshow("DEPTH_IMAGE", depth_image)
                     #cv2.waitKey(1)
 
-                if (len(traffic_light) != 0):
-                    check_traffic_light_state(bp, traffic_light, current_speed)
+                
+                check_traffic_light_state(bp, traffic_light, current_speed)
+                
             ####################################################################################################################################
                 # Compute open loop speed estimate.
                 open_loop_speed = lp._velocity_planner.get_open_loop_speed(current_timestamp - prev_timestamp)
@@ -917,7 +921,7 @@ def exec_waypoint_nav_demo(args):
                     #decelerate_to_stop = (bp._state == behavioural_planner.DECELERATE_TO_STOP or bp._state == behavioural_planner.STAY_STOPPED)
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
         ####################################################################################################################################
-                    prev_distance_traffic = 500
+                    
                     print('STATO: ' + str(bp._state))
 
                     #Setting also the distance threshold from the traffic light in the if statement
@@ -931,11 +935,13 @@ def exec_waypoint_nav_demo(args):
 
                         if prev_distance_traffic > distance_from_traffic_light:
                             prev_distance_traffic = distance_from_traffic_light
-
+                        
+                        
                         if prev_distance_traffic <= 10:
                             best_path = lp._prev_best_path
                             for i in range(0,len(best_path[2])):
                                 best_path[2][i] = 0
+                        
 
                         print('PREV_DISTANCE: ' + str(prev_distance_traffic))
                         
