@@ -68,7 +68,7 @@ CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
 ###############################################################################
 # CONFIGURABLE PARAMENTERS OF TRAFFIC LIGHT MANAGEMENT
 ###############################################################################
-MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 1
+MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 1.2
 MAX_DISTANCE_FROM_TRAFFIC_LIGHT = 10
 SHORT_DISTANCE_COUNTER_THRESHOLD = 2
 SAME_DISTANCE_COUNTER_THRESHOLD = 2
@@ -947,8 +947,8 @@ def exec_waypoint_nav_demo(args):
                             best_path = lp._prev_best_path
                             if counter_short_distance >= SHORT_DISTANCE_COUNTER_THRESHOLD:
                                 print('IO SONO ENTRATO POI NON SO CHE SUCCEDE########################################')
-                                #if bp._state == behavioural_planner.STAY_STOPPED:
-                                counter_short_distance = 0
+                                if bp._state == behavioural_planner.STAY_STOPPED:
+                                    counter_short_distance = 0
                                 best_path = [lp._prev_best_path[0][:INDEX_CUT_PATH],lp._prev_best_path[1][:INDEX_CUT_PATH],lp._prev_best_path[2][:INDEX_CUT_PATH]]
                                 for i in range(0, len(best_path[2])):
                                     best_path[2][i] = 0
