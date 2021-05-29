@@ -144,7 +144,7 @@ class BehaviouralPlanner:
             
             #if not stop_sign_found: self._state = FOLLOW_LANE
 
-            if (self._green_count > 10 and self._traffic_light_state == 'go' and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
+            if ((self._green_count > 10  and self._traffic_light_state == 'go') or self._red_count==0 and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
                 print('FOLLOW LANE')
                 self._state = FOLLOW_LANE
                 self._red_count = 0
@@ -338,7 +338,7 @@ def check_traffic_light_state(self, traffic_light, current_speed):
     
     self._count +=1
     
-    if self._red_count == 1 and self._count > 15:
+    if self._red_count >0 and self._count > 15:
         self._count = 0 
         self._red_count = 0
 

@@ -13,11 +13,11 @@ with open(file_path) as config_buffer:
 
 def detect_on_carla_image(model,carla_image):
     netout = predict_with_model_from_carla(config, model, carla_image)
-    """
+
     plt_image = draw_boxes(carla_image, netout, config['model']['classes'])
     cv2.imshow('detected_image', plt_image)
     cv2.waitKey(1)
-    """
+
     list=[]
 
     image_h, image_w, _ = carla_image.shape

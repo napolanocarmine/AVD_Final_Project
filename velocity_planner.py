@@ -207,6 +207,9 @@ class VelocityPlanner:
         # the path up in reverse to ensure we reach zero speed at the required
         # time.
         if brake_distance + decel_distance + stop_line_buffer > path_length:
+            print('###################################################')
+            print('SONO ENTRATO NELLIF DI FRENATA BRUSCA')
+            print('###################################################')
             speeds = []
             vf = 0.0
             # The speeds past the stop line buffer should be zero.
@@ -236,6 +239,9 @@ class VelocityPlanner:
         # decelerating to our slow_speed. These two indices denote the
         # endpoints of the ramps in our trapezoidal profile.
         else:
+            print('###################################################')
+            print('SONO ENTRATO NELLIF DI FRENATA NORMALE')
+            print('###################################################')
             brake_index = stop_index 
             temp_dist = 0.0
             # Compute the index at which to start braking down to zero.
