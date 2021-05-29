@@ -49,8 +49,8 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 51    # spawn index for player
-DESTINATION_INDEX      = 99    # Setting a Destination HERE
+PLAYER_START_INDEX     = 11    # spawn index for player
+DESTINATION_INDEX      = 134    # Setting a Destination HERE
 NUM_PEDESTRIANS        = 10    # total number of pedestrians to spawn
 NUM_VEHICLES           = 10   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
@@ -116,7 +116,7 @@ TIME_GAP               = 1.0              # s
 PATH_SELECT_WEIGHT     = 10
 A_MAX                  = 2.5              # m/s^2
 SLOW_SPEED             = 2.0              # m/s
-STOP_LINE_BUFFER       = 0                # m
+STOP_LINE_BUFFER       = 2                # m
 LEAD_VEHICLE_LOOKAHEAD = 20.0             # m
 LP_FREQUENCY_DIVISOR   = 2                # Frequency divisor to make the
                                           # local planner operate at a lower
@@ -861,7 +861,7 @@ def exec_waypoint_nav_demo(args):
                 depth_image=image_converter.to_bgra_array(sensor_data["CameraDepth"])
                 depth_image = cv2.resize(depth_image, (416,416))
                 
-                traffic_light=detect_on_carla_image(model,image_RGB)
+                traffic_light= detect_on_carla_image(model,image_RGB)
                 #print(traffic_light)
 
                 #Computing of the distance from the traffic light using a depth camera
@@ -939,21 +939,22 @@ def exec_waypoint_nav_demo(args):
 
                         if prev_distance_traffic <= MAX_DISTANCE_FROM_TRAFFIC_LIGHT  and prev_distance_traffic > MIN_DISTANCE_FROM_TRAFFIC_LIGHT:
                             best_path = lp._prev_best_path
-                            for i in range(0,len(best_path[2])):
-                                best_path[2][i] = 0
 
                         elif prev_distance_traffic <= MIN_DISTANCE_FROM_TRAFFIC_LIGHT:
                             counter_short_distance += 1
                             best_path = lp._prev_best_path
                             if counter_short_distance >= SHORT_DISTANCE_COUNTER_THRESHOLD:
-                                print('IO SONO ENTRATO POI NON SO CHE SUCCEDE########################################')
-                                #if bp._state == behavioural_planner.STAY_STOPPED:
-                                counter_short_distance = 0
-                                best_path = [lp._prev_best_path[0][:INDEX_CUT_PATH],lp._prev_best_path[1][:INDEX_CUT_PATH],lp._prev_best_path[2][:INDEX_CUT_PATH]]
+                                if bp._state == behavioural_planner.STAY_STOPPED:
+                                    counter_short_distance = 0
+                                #best_path = [lp._prev_best_path[0][:INDEX_CUT_PATH],lp._prev_best_path[1][:INDEX_CUT_PATH],lp._prev_best_path[2][:INDEX_CUT_PATH]]
                                 for i in range(0, len(best_path[2])):
-                                    best_path[2][i] = 0
+                                    if np.sqrt((best_path[i][0] - ego_state[0])**2 + (best_path[i][1] - ego_state[1])**2) > prev_distance_traffic:
+                                        best_path = [lp._prev_best_path[0][:i+3],lp._prev_best_path[1][:i+3],lp._prev_best_path[2][:i+1]]
+                                        break
+                    elif(bp._traffic_flag == False):
+                        prev_distance_traffic = 500
 
-                        print('PREV_DISTANCE: ' + str(prev_distance_traffic))
+                    print('PREV_DISTANCE: ' + str(prev_distance_traffic))
                         
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
