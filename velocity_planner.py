@@ -206,6 +206,8 @@ class VelocityPlanner:
         # perform a smooth deceleration and require a harder deceleration. Build
         # the path up in reverse to ensure we reach zero speed at the required
         # time.
+        print('PATH LENGHT: ' +str(path_length))
+        print('SOMMA ' + str(brake_distance + decel_distance + stop_line_buffer))
         if brake_distance + decel_distance + stop_line_buffer > path_length:
             print('###################################################')
             print('SONO ENTRATO NELLIF DI FRENATA BRUSCA')

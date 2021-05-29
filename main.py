@@ -46,7 +46,6 @@ with open(file_path) as config_buffer:
     config = json.loads(config_buffer.read())
 model = get_model(config)
 
-
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
@@ -66,6 +65,15 @@ CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
                                 # used to make sure the server loads
                                 # consistently
 
+###############################################################################
+# CONFIGURABLE PARAMENTERS OF TRAFFIC LIGHT MANAGEMENT
+###############################################################################
+MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 1
+MAX_DISTANCE_FROM_TRAFFIC_LIGHT = 10
+SHORT_DISTANCE_COUNTER_THRESHOLD = 2
+SAME_DISTANCE_COUNTER_THRESHOLD = 2
+STAY_STOPPED_DESIRED_SPEED = 0
+INDEX_CUT_PATH = 5
 
 
 WEATHERID = {
@@ -108,7 +116,7 @@ TIME_GAP               = 1.0              # s
 PATH_SELECT_WEIGHT     = 10
 A_MAX                  = 2.5              # m/s^2
 SLOW_SPEED             = 2.0              # m/s
-STOP_LINE_BUFFER       = 0              # m
+STOP_LINE_BUFFER       = 0                # m
 LEAD_VEHICLE_LOOKAHEAD = 20.0             # m
 LP_FREQUENCY_DIVISOR   = 2                # Frequency divisor to make the
                                           # local planner operate at a lower
@@ -786,16 +794,11 @@ def exec_waypoint_nav_demo(args):
         prev_collision_pedestrians = 0
         prev_collision_other       = 0
 
-        """
-        #IN BEHAVIOURAL PLANNER ?
-        count = 0
-        count_red = 0
-        count_green = 0
-        traffic_flag=False
-        """
-        counter_short_distance=0
-        counter_same_distance = 0
-        prev_distance_traffic=500
+        # Initialize traffic light parameters
+        counter_short_distance  = 0
+        counter_same_distance   = 0
+        prev_distance_traffic   = 500
+
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
@@ -921,29 +924,32 @@ def exec_waypoint_nav_demo(args):
                     #decelerate_to_stop = (bp._state == behavioural_planner.DECELERATE_TO_STOP or bp._state == behavioural_planner.STAY_STOPPED)
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
         ####################################################################################################################################
-                    print('STATO: ' + str(bp._state))
 
                     #Setting also the distance threshold from the traffic light in the if statement
                     if(bp._traffic_flag == True):
 
                         if bp._state == behavioural_planner.STAY_STOPPED:
-                            desired_speed = 0
+                            desired_speed = STAY_STOPPED_DESIRED_SPEED
 
                         if prev_distance_traffic > distance_from_traffic_light:
-                            counter_same_distance+=1
-                            if counter_same_distance >2:
-                                counter_same_distance=0
+                            counter_same_distance += 1
+                            if counter_same_distance > SAME_DISTANCE_COUNTER_THRESHOLD:
+                                counter_same_distance = 0
                                 prev_distance_traffic = distance_from_traffic_light
 
-                        if prev_distance_traffic <= 10  and prev_distance_traffic > 1:
+                        if prev_distance_traffic <= MAX_DISTANCE_FROM_TRAFFIC_LIGHT  and prev_distance_traffic > MIN_DISTANCE_FROM_TRAFFIC_LIGHT:
                             best_path = lp._prev_best_path
                             for i in range(0,len(best_path[2])):
                                 best_path[2][i] = 0
-                        if prev_distance_traffic <=1:
-                            counter_short_distance+=1
-                            if counter_short_distance>=2:
-                                counter_short_distance=0
-                                best_path = [lp._prev_best_path[0][:5],lp._prev_best_path[1][:5],lp._prev_best_path[2][:5]]
+
+                        elif prev_distance_traffic <= MIN_DISTANCE_FROM_TRAFFIC_LIGHT:
+                            counter_short_distance += 1
+                            best_path = lp._prev_best_path
+                            if counter_short_distance >= SHORT_DISTANCE_COUNTER_THRESHOLD:
+                                print('IO SONO ENTRATO POI NON SO CHE SUCCEDE########################################')
+                                #if bp._state == behavioural_planner.STAY_STOPPED:
+                                counter_short_distance = 0
+                                best_path = [lp._prev_best_path[0][:INDEX_CUT_PATH],lp._prev_best_path[1][:INDEX_CUT_PATH],lp._prev_best_path[2][:INDEX_CUT_PATH]]
                                 for i in range(0, len(best_path[2])):
                                     best_path[2][i] = 0
 
