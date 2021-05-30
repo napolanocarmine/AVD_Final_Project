@@ -49,8 +49,8 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 17    # spawn index for player
-DESTINATION_INDEX      = 99    # Setting a Destination HERE
+PLAYER_START_INDEX     = 32    # spawn index for player
+DESTINATION_INDEX      = 132    # Setting a Destination HERE
 NUM_PEDESTRIANS        = 0    # total number of pedestrians to spawn
 NUM_VEHICLES           = 70   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 20     # seed for pedestrian spawn randomizer
@@ -545,7 +545,7 @@ def exec_waypoint_nav_demo(args):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 5.0
+        desired_speed = 8.0
         turn_speed    = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()
@@ -798,6 +798,8 @@ def exec_waypoint_nav_demo(args):
         counter_short_distance  = 0
         counter_same_distance   = 0
         prev_distance_traffic   = 500
+
+        
 
 
         for frame in range(TOTAL_EPISODE_FRAMES):
