@@ -805,10 +805,7 @@ def exec_waypoint_nav_demo(args):
         collision_flag = False
         obstacles = []
 
-        #Initialize lead car parameters
-        lead_car_pos    = []
-        lead_car_length = []
-        lead_car_speed  = []
+
 
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
@@ -846,9 +843,16 @@ def exec_waypoint_nav_demo(args):
             collided_flag_history.append(collided_flag)
 
             ###################################################################################################
+
+            #Initialize lead car parameters
+            lead_car_pos    = []
+            lead_car_length = []
+            lead_car_speed  = []
+
             # Obtain Lead Vehicle information.
             for agent in measurement_data.non_player_agents:
                 agent_id = agent.id
+                print(agent)
                 if agent.HasField('vehicle'):
                     lead_car_pos.append(
                             [agent.vehicle.transform.location.x,
@@ -982,6 +986,7 @@ def exec_waypoint_nav_demo(args):
                     desired_speed = bp._goal_state[2]
                     #decelerate_to_stop = (bp._state == behavioural_planner.DECELERATE_TO_STOP or bp._state == behavioural_planner.STAY_STOPPED)
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
+                    lead_car_state = [lead_car_pos[1][0], lead_car_pos[1][1], lead_car_speed[1]]
                     
         ####################################################################################################################################
 
@@ -1016,7 +1021,7 @@ def exec_waypoint_nav_demo(args):
 
                     #print('PREV_DISTANCE: ' + str(prev_distance_traffic))
                     
-                    lead_car_state = [lead_car_pos[1][0], lead_car_pos[1][1], lead_car_speed[1]]
+                    
                     print('LEAD CAR STATE: ' +str(lead_car_state))
                     print('FOLLOW LEAD: ' + str(bp._follow_lead_vehicle))
         ####################################################################################################################################
