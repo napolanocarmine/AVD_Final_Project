@@ -49,11 +49,11 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 51    # spawn index for player
-DESTINATION_INDEX      = 62    # Setting a Destination HERE
-NUM_PEDESTRIANS        = 50    # total number of pedestrians to spawn
-NUM_VEHICLES           = 50   # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
+PLAYER_START_INDEX     = 17    # spawn index for player
+DESTINATION_INDEX      = 99    # Setting a Destination HERE
+NUM_PEDESTRIANS        = 0    # total number of pedestrians to spawn
+NUM_VEHICLES           = 70   # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 20     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
 ###############################################################################àà
 
@@ -855,14 +855,14 @@ def exec_waypoint_nav_demo(args):
             ##########################################################################################
             ##########################################################################################
             if frame % LP_FREQUENCY_DIVISOR == 0:
-                
+                '''
                 image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
             
-                image_RGB = cv2.resize(image_RGB, (416, 416))
+                #image_RGB = cv2.resize(image_RGB, (416, 416))
                 #cv2.imshow("RGB_IMAGE", image_RGB)
                 #cv2.waitKey(1)
                 depth_image=image_converter.to_bgra_array(sensor_data["CameraDepth"])
-                depth_image = cv2.resize(depth_image, (416,416))
+                depth_image = cv2.resize(depth_image, (600,600))
                 
                 traffic_light= detect_on_carla_image(model,image_RGB)
                 #print(traffic_light)
@@ -884,7 +884,7 @@ def exec_waypoint_nav_demo(args):
                     #cv2.imshow("DEPTH_IMAGE", depth_image)
                     #cv2.waitKey(1)
                 
-                
+                '''
                 #Recovering information about pedestrians and other vehicles
                 for agent in measurement_data.non_player_agents:
                     if agent.HasField('vehicle'):
@@ -910,7 +910,7 @@ def exec_waypoint_nav_demo(args):
 
                 # Conversion to np array for plotting
                 obstacles = np.asarray(obstacles)
-
+                traffic_light=[]
                 check_traffic_light_state(bp, traffic_light, current_speed)
             ####################################################################################################################################
                 # Compute open loop speed estimate.
@@ -936,7 +936,7 @@ def exec_waypoint_nav_demo(args):
                 paths = local_planner.transform_paths(paths, ego_state)
 
                 # Perform collision checking.
-                collision_check_array = lp._collision_checker.collision_check(paths, [])
+                collision_check_array = lp._collision_checker.collision_check(paths,obstacles)
 
                 # Compute the best local path.
                 best_index = lp._collision_checker.select_best_path_index(paths, collision_check_array, bp._goal_state)
