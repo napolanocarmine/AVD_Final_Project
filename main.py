@@ -49,12 +49,12 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 17    # spawn index for player
-DESTINATION_INDEX      = 99    # Setting a Destination HERE
-NUM_PEDESTRIANS        = 3000    # total number of pedestrians to spawn
-NUM_VEHICLES           = 2000   # total number of vehicles to spawn
+PLAYER_START_INDEX     = 105    # spawn index for player
+DESTINATION_INDEX      = 134    # Setting a Destination HERE
+NUM_PEDESTRIANS        = 0    # total number of pedestrians to spawn
+NUM_VEHICLES           = 300   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 20     # seed for pedestrian spawn randomizer
-SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
+SEED_VEHICLES          = 20     # seed for vehicle spawn randomizer
 ###############################################################################àà
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
@@ -75,7 +75,7 @@ SAME_DISTANCE_COUNTER_THRESHOLD = 2
 STAY_STOPPED_DESIRED_SPEED = 0
 INDEX_CUT_PATH = 5
 
-COLLISION_RADIUS = 15
+COLLISION_RADIUS = 25
 
 WEATHERID = {
     "DEFAULT": 0,
@@ -107,8 +107,8 @@ DIST_THRESHOLD_TO_LAST_WAYPOINT = 2.0  # some distance from last position before
                                        # simulation ends
 
 # Planning Constants
-NUM_PATHS = 7
-BP_LOOKAHEAD_BASE      = 16.0              # m
+NUM_PATHS = 13
+BP_LOOKAHEAD_BASE      = 22.0              # m
 BP_LOOKAHEAD_TIME      = 1.0              # s
 PATH_OFFSET            = 1.5              # m
 CIRCLE_OFFSETS         = [-1.0, 1.0, 3.0] # m
@@ -546,7 +546,7 @@ def exec_waypoint_nav_demo(args):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 10.0
+        desired_speed = 5.0
         turn_speed    = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()
@@ -899,33 +899,33 @@ def exec_waypoint_nav_demo(args):
                     #cv2.waitKey(1)
                 """
                 # UPDATE HERE the obstacles list
-                if collision_flag == True:
-                    obstacles = []
-                    print("ok")
-                    #Recovering information about pedestrians and other vehicles
-                    for agent in measurement_data.non_player_agents:
-                        if agent.HasField('vehicle'):
-                            location = agent.vehicle.transform.location
-                            if np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2) <= COLLISION_RADIUS:
-                                #print("veicolo nei paraggi")
-                                dimension = agent.vehicle.bounding_box.extent
-                                orientation = agent.vehicle.transform.rotation
-                                obstacles.append(obstacle_to_world(location, dimension, orientation))
-                            #print('VEHICLE')
-                        elif agent.HasField('pedestrian'):
-                            #print('PEDESTRIAN')
-                            location = agent.pedestrian.transform.location
-                            if np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2) <= COLLISION_RADIUS:
-                                #print("pedone nei paraggi")
-                                dimension = agent.pedestrian.bounding_box.extent
-                                orientation = agent.pedestrian.transform.rotation
-                                obstacles.append(obstacle_to_world(location, dimension, orientation))
+                #if collision_flag == True:
+                obstacles = []
+                print("ok")
+                #Recovering information about pedestrians and other vehicles
+                for agent in measurement_data.non_player_agents:
+                    if agent.HasField('vehicle'):
+                        location = agent.vehicle.transform.location
+                        if np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2) <= COLLISION_RADIUS:
+                            #print("veicolo nei paraggi")
+                            dimension = agent.vehicle.bounding_box.extent
+                            orientation = agent.vehicle.transform.rotation
+                            obstacles.append(obstacle_to_world(location, dimension, orientation))
+                        #print('VEHICLE')
+                    elif agent.HasField('pedestrian'):
+                        #print('PEDESTRIAN')
+                        location = agent.pedestrian.transform.location
+                        if np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2) <= COLLISION_RADIUS:
+                            #print("pedone nei paraggi")
+                            dimension = agent.pedestrian.bounding_box.extent
+                            orientation = agent.pedestrian.transform.rotation
+                            obstacles.append(obstacle_to_world(location, dimension, orientation))
 
-                    # Conversion to np array for plotting
-                    obstacles = np.asarray(obstacles)
-                    collision_flag = False
-                else:
-                    collision_flag = True
+                # Conversion to np array for plotting
+                obstacles = np.asarray(obstacles)
+                collision_flag = False
+            #else:
+                #collision_flag = True
                 
                 #check_traffic_light_state(bp, traffic_light, current_speed)
             ###################################################################################################################################
@@ -952,7 +952,9 @@ def exec_waypoint_nav_demo(args):
                 best_index = lp._collision_checker.select_best_path_index(paths, collision_check_array, bp._goal_state)
                 # If no path was feasible, continue to follow the previous best path.
                 if best_index == None:
-                    best_path = lp._prev_best_path
+                    #best_path = lp._prev_best_path
+                    best_path = [lp._prev_best_path[0][:i + 3], lp._prev_best_path[1][:i + 3],
+                                lp._prev_best_path[2][:i + 3]]
                 else:
                     best_path = paths[best_index]
                     lp._prev_best_path = best_path
