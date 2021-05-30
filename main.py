@@ -984,6 +984,8 @@ def exec_waypoint_nav_demo(args):
                         prev_distance_traffic = 500
 
                     print('PREV_DISTANCE: ' + str(prev_distance_traffic))
+
+                    #behavioural_planner.BehaviouralPlanner.check_for_lead_vehicle(bp, ego_state, )
                         
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
