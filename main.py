@@ -75,7 +75,7 @@ SAME_DISTANCE_COUNTER_THRESHOLD = 2
 STAY_STOPPED_DESIRED_SPEED = 0
 INDEX_CUT_PATH = 5
 
-COLLISION_RADIUS = 15
+COLLISION_RADIUS = 30
 
 WEATHERID = {
     "DEFAULT": 0,
@@ -118,7 +118,7 @@ PATH_SELECT_WEIGHT     = 10
 A_MAX                  = 2.5              # m/s^2
 SLOW_SPEED             = 2.0              # m/s
 STOP_LINE_BUFFER       = 2                # m
-LEAD_VEHICLE_LOOKAHEAD = 20.0             # m
+LEAD_VEHICLE_LOOKAHEAD = 30.0             # m
 LP_FREQUENCY_DIVISOR   = 2                # Frequency divisor to make the
                                           # local planner operate at a lower
                                           # frequency than the controller
@@ -852,7 +852,7 @@ def exec_waypoint_nav_demo(args):
             # Obtain Lead Vehicle information.
             for agent in measurement_data.non_player_agents:
                 agent_id = agent.id
-                print(agent)
+                #print(agent)
                 if agent.HasField('vehicle'):
                     lead_car_pos.append(
                             [agent.vehicle.transform.location.x,
@@ -919,8 +919,11 @@ def exec_waypoint_nav_demo(args):
                 """
                 # UPDATE HERE the obstacles list
                 if collision_flag == True:
+                    lead_car_pos = []
+                    lead_car_length = []
+                    lead_car_speed = []
                     obstacles = []
-                    print("ok")
+                    #print("ok")
                     #Recovering information about pedestrians and other vehicles
                     for agent in measurement_data.non_player_agents:
                         if agent.HasField('vehicle'):
@@ -930,6 +933,12 @@ def exec_waypoint_nav_demo(args):
                                 dimension = agent.vehicle.bounding_box.extent
                                 orientation = agent.vehicle.transform.rotation
                                 obstacles.append(obstacle_to_world(location, dimension, orientation))
+                                if(abs(ego_state[2]-orientation.yaw)<3):
+                                    lead_car_pos.append(
+                                    [agent.vehicle.transform.location.x,
+                                        agent.vehicle.transform.location.y])
+                                lead_car_length.append(agent.vehicle.bounding_box.extent.x)
+                                lead_car_speed.append(agent.vehicle.forward_speed)
                             #print('VEHICLE')
                         elif agent.HasField('pedestrian'):
                             #print('PEDESTRIAN')
@@ -956,7 +965,9 @@ def exec_waypoint_nav_demo(args):
                 bp.transition_state(waypoints, ego_state, current_speed)
 
                 # Check to see if we need to follow the lead vehicle. #########################################################################
-                bp.check_for_lead_vehicle(ego_state, lead_car_pos[1])
+                if(len(lead_car_pos)!=0):
+                    bp.check_for_lead_vehicle(ego_state, lead_car_pos[0])
+                
 
                 # Compute the goal state set from the behavioural planner's computed goal state.
                 goal_state_set = lp.get_goal_state_set(bp._goal_index, bp._goal_state, waypoints, ego_state)
@@ -986,7 +997,6 @@ def exec_waypoint_nav_demo(args):
                     desired_speed = bp._goal_state[2]
                     #decelerate_to_stop = (bp._state == behavioural_planner.DECELERATE_TO_STOP or bp._state == behavioural_planner.STAY_STOPPED)
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
-                    lead_car_state = [lead_car_pos[1][0], lead_car_pos[1][1], lead_car_speed[1]]
                     
         ####################################################################################################################################
 
@@ -1020,12 +1030,22 @@ def exec_waypoint_nav_demo(args):
                         prev_distance_traffic = 500
 
                     #print('PREV_DISTANCE: ' + str(prev_distance_traffic))
-                    
-                    
-                    print('LEAD CAR STATE: ' +str(lead_car_state))
-                    print('FOLLOW LEAD: ' + str(bp._follow_lead_vehicle))
+
+                    if (len(lead_car_pos) != 0):
+                        lead_car_state = [lead_car_pos[0][0], lead_car_pos[0][1], lead_car_speed[0]]
+                        print('LEAD CAR STATE: ' +str(lead_car_state))
+                        print('FOLLOW LEAD: ' + str(bp._follow_lead_vehicle))
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, lead_car_state, bp._follow_lead_vehicle)
+
+                    if (len(lead_car_pos) != 0):
+                        local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, lead_car_state, bp._follow_lead_vehicle)
+                    else:
+                        local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed,
+                                                                                        ego_state, current_speed,
+                                                                                        decelerate_to_stop,
+                                                                                        None,
+                                                                                        bp._follow_lead_vehicle)
 
                     if local_waypoints != None:
                         # Update the controller waypoint path with the best local path.
@@ -1092,8 +1112,8 @@ def exec_waypoint_nav_demo(args):
                 trajectory_fig.roll("car", current_x, current_y)
 
                 if lead_car_pos:    # If there exists a lead car, plot it
-                    trajectory_fig.roll("leadcar", lead_car_pos[1][0],
-                                        lead_car_pos[1][1])
+                    trajectory_fig.roll("leadcar", lead_car_pos[0][0],
+                                        lead_car_pos[0][1])
                 
                 # Load parked car points
                 if len(obstacles) > 0:
