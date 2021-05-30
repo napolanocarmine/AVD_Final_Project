@@ -805,7 +805,7 @@ def exec_waypoint_nav_demo(args):
         collision_flag = False
         obstacles = []
 
-        # Obtain Lead Vehicle information.
+        #Initialize lead car parameters
         lead_car_pos    = []
         lead_car_length = []
         lead_car_speed  = []
@@ -845,6 +845,8 @@ def exec_waypoint_nav_demo(args):
                                                  prev_collision_other)
             collided_flag_history.append(collided_flag)
 
+            ###################################################################################################
+            # Obtain Lead Vehicle information.
             for agent in measurement_data.non_player_agents:
                 agent_id = agent.id
                 if agent.HasField('vehicle'):
@@ -854,7 +856,7 @@ def exec_waypoint_nav_demo(args):
                     lead_car_length.append(agent.vehicle.bounding_box.extent.x)
                     lead_car_speed.append(agent.vehicle.forward_speed)
 
-            
+            ###################################################################################################
 
             # Execute the behaviour and local planning in the current instance
             # Note that updating the local path during every controller update
