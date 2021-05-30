@@ -810,16 +810,6 @@ def exec_waypoint_nav_demo(args):
         lead_car_length = []
         lead_car_speed  = []
 
-        for agent in measurement_data.non_player_agents:
-            agent_id = agent.id
-            if agent.HasField('vehicle'):
-                lead_car_pos.append(
-                        [agent.vehicle.transform.location.x,
-                            agent.vehicle.transform.location.y])
-                lead_car_length.append(agent.vehicle.bounding_box.extent.x)
-                lead_car_speed.append(agent.vehicle.forward_speed)
-
-
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
@@ -854,6 +844,15 @@ def exec_waypoint_nav_demo(args):
                                                  prev_collision_pedestrians,
                                                  prev_collision_other)
             collided_flag_history.append(collided_flag)
+
+            for agent in measurement_data.non_player_agents:
+                agent_id = agent.id
+                if agent.HasField('vehicle'):
+                    lead_car_pos.append(
+                            [agent.vehicle.transform.location.x,
+                                agent.vehicle.transform.location.y])
+                    lead_car_length.append(agent.vehicle.bounding_box.extent.x)
+                    lead_car_speed.append(agent.vehicle.forward_speed)
 
             
 
