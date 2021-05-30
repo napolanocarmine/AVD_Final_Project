@@ -51,8 +51,8 @@ model = get_model(config)
 ###############################################################################
 PLAYER_START_INDEX     = 17    # spawn index for player
 DESTINATION_INDEX      = 99    # Setting a Destination HERE
-NUM_PEDESTRIANS        = 0    # total number of pedestrians to spawn
-NUM_VEHICLES           = 70   # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 3000    # total number of pedestrians to spawn
+NUM_VEHICLES           = 2000   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 20     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -75,6 +75,7 @@ SAME_DISTANCE_COUNTER_THRESHOLD = 2
 STAY_STOPPED_DESIRED_SPEED = 0
 INDEX_CUT_PATH = 5
 
+COLLISION_RADIUS = 15
 
 WEATHERID = {
     "DEFAULT": 0,
@@ -545,7 +546,7 @@ def exec_waypoint_nav_demo(args):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 5.0
+        desired_speed = 10.0
         turn_speed    = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()
@@ -798,16 +799,16 @@ def exec_waypoint_nav_demo(args):
         counter_short_distance  = 0
         counter_same_distance   = 0
         prev_distance_traffic   = 500
+        traffic_light = []
+        detection_flag = False
+
+        collision_flag = False
+        obstacles = []
 
 
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
-
-            # UPDATE HERE the obstacles list
-            obstacles = []
-            collision_vehicles = []
-            collision_pedestrians = []
 
             # Update pose and timestamp
             prev_timestamp = current_timestamp
@@ -855,16 +856,29 @@ def exec_waypoint_nav_demo(args):
             ##########################################################################################
             ##########################################################################################
             if frame % LP_FREQUENCY_DIVISOR == 0:
-                '''
-                image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
-            
-                #image_RGB = cv2.resize(image_RGB, (416, 416))
-                #cv2.imshow("RGB_IMAGE", image_RGB)
-                #cv2.waitKey(1)
-                depth_image=image_converter.to_bgra_array(sensor_data["CameraDepth"])
-                depth_image = cv2.resize(depth_image, (600,600))
+
+                # Compute open loop speed estimate.
+                open_loop_speed = lp._velocity_planner.get_open_loop_speed(current_timestamp - prev_timestamp)
+
+                # Calculate the goal state set in the local frame for the local planner.
+                # Current speed should be open loop for the velocity profile generation.
+                ego_state = [current_x, current_y, current_yaw, open_loop_speed]
+
+                """
+                if detection_flag == True:
+                    detection_flag == False
+                    print("ci sono")
+                    image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
                 
-                traffic_light= detect_on_carla_image(model,image_RGB)
+                    image_RGB = cv2.resize(image_RGB, (416, 416))
+                    #cv2.imshow("RGB_IMAGE", image_RGB)
+                    #cv2.waitKey(1)
+                    depth_image=image_converter.to_bgra_array(sensor_data["CameraDepth"])
+                    depth_image = cv2.resize(depth_image, (416,416))
+                    
+                    traffic_light= detect_on_carla_image(model,image_RGB)
+                elif detection_flag == False:
+                    detection_flag = True
                 #print(traffic_light)
 
                 #Computing of the distance from the traffic light using a depth camera
@@ -883,42 +897,38 @@ def exec_waypoint_nav_demo(args):
                     #Visualization of the taken depth image
                     #cv2.imshow("DEPTH_IMAGE", depth_image)
                     #cv2.waitKey(1)
+                """
+                # UPDATE HERE the obstacles list
+                if collision_flag == True:
+                    obstacles = []
+                    print("ok")
+                    #Recovering information about pedestrians and other vehicles
+                    for agent in measurement_data.non_player_agents:
+                        if agent.HasField('vehicle'):
+                            location = agent.vehicle.transform.location
+                            if np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2) <= COLLISION_RADIUS:
+                                #print("veicolo nei paraggi")
+                                dimension = agent.vehicle.bounding_box.extent
+                                orientation = agent.vehicle.transform.rotation
+                                obstacles.append(obstacle_to_world(location, dimension, orientation))
+                            #print('VEHICLE')
+                        elif agent.HasField('pedestrian'):
+                            #print('PEDESTRIAN')
+                            location = agent.pedestrian.transform.location
+                            if np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2) <= COLLISION_RADIUS:
+                                #print("pedone nei paraggi")
+                                dimension = agent.pedestrian.bounding_box.extent
+                                orientation = agent.pedestrian.transform.rotation
+                                obstacles.append(obstacle_to_world(location, dimension, orientation))
+
+                    # Conversion to np array for plotting
+                    obstacles = np.asarray(obstacles)
+                    collision_flag = False
+                else:
+                    collision_flag = True
                 
-                '''
-                #Recovering information about pedestrians and other vehicles
-                for agent in measurement_data.non_player_agents:
-                    if agent.HasField('vehicle'):
-                        collision_vehicles.append(agent)
-                        #print('VEHICLE')
-                    if agent.HasField('pedestrian'):
-                        collision_pedestrians.append(agent)
-                        #print('PEDESTRIAN')
-                
-                # Taking the vehicles from the world
-                for agent in collision_vehicles:
-                    location = agent.vehicle.transform.location
-                    dimension = agent.vehicle.bounding_box.extent
-                    orientation = agent.vehicle.transform.rotation
-                    obstacles.append(obstacle_to_world(location, dimension, orientation))
-
-                # Taking the pedestrians from the world
-                for agent in collision_pedestrians:
-                    location = agent.pedestrian.transform.location
-                    dimension = agent.pedestrian.bounding_box.extent
-                    orientation = agent.pedestrian.transform.rotation
-                    obstacles.append(obstacle_to_world(location, dimension, orientation))
-
-                # Conversion to np array for plotting
-                obstacles = np.asarray(obstacles)
-                traffic_light=[]
-                check_traffic_light_state(bp, traffic_light, current_speed)
-            ####################################################################################################################################
-                # Compute open loop speed estimate.
-                open_loop_speed = lp._velocity_planner.get_open_loop_speed(current_timestamp - prev_timestamp)
-
-                # Calculate the goal state set in the local frame for the local planner.
-                # Current speed should be open loop for the velocity profile generation.
-                ego_state = [current_x, current_y, current_yaw, open_loop_speed]
+                #check_traffic_light_state(bp, traffic_light, current_speed)
+            ###################################################################################################################################
 
                 # Set lookahead based on current speed.
                 bp.set_lookahead(BP_LOOKAHEAD_BASE + BP_LOOKAHEAD_TIME * open_loop_speed)
@@ -983,7 +993,7 @@ def exec_waypoint_nav_demo(args):
                     elif(bp._traffic_flag == False):
                         prev_distance_traffic = 500
 
-                    print('PREV_DISTANCE: ' + str(prev_distance_traffic))
+                    #print('PREV_DISTANCE: ' + str(prev_distance_traffic))
                         
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)

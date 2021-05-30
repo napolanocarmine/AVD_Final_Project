@@ -91,7 +91,7 @@ class BehaviouralPlanner:
         # complete, and examine the check_for_stop_signs() function to
         # understand it.
         if self._state == FOLLOW_LANE and self._traffic_flag == False:
-            print("FOLLOW_LANE")
+            #print("FOLLOW_LANE")
             # First, find the closest index to the ego vehicle.
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
 
@@ -118,7 +118,7 @@ class BehaviouralPlanner:
         # least STOP_COUNTS number of cycles. If so, we can now leave
         # the stop sign and transition to the next state.
         elif self._state == STAY_STOPPED:
-            print("STAY_STOPPED")
+            #print("STAY_STOPPED")
             # We have stayed stopped for the required number of cycles.
             # Allow the ego vehicle to leave the stop sign. Once it has
             # passed the stop sign, return to lane following.
@@ -145,7 +145,7 @@ class BehaviouralPlanner:
             #if not stop_sign_found: self._state = FOLLOW_LANE
 
             if ((self._green_count > 10  and self._traffic_light_state == 'go') or self._red_count==0 and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
-                print('FOLLOW LANE')
+                #print('FOLLOW LANE')
                 self._state = FOLLOW_LANE
                 self._red_count = 0
                 self._green_count = 0
