@@ -50,9 +50,9 @@ model = get_model(config)
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
 PLAYER_START_INDEX     = 51    # spawn index for player
-DESTINATION_INDEX      = 99    # Setting a Destination HERE
-NUM_PEDESTRIANS        = 10    # total number of pedestrians to spawn
-NUM_VEHICLES           = 10   # total number of vehicles to spawn
+DESTINATION_INDEX      = 62    # Setting a Destination HERE
+NUM_PEDESTRIANS        = 50    # total number of pedestrians to spawn
+NUM_VEHICLES           = 50   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -68,7 +68,7 @@ CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
 ###############################################################################
 # CONFIGURABLE PARAMENTERS OF TRAFFIC LIGHT MANAGEMENT
 ###############################################################################
-MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 3
+MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 1
 MAX_DISTANCE_FROM_TRAFFIC_LIGHT = 10
 SHORT_DISTANCE_COUNTER_THRESHOLD = 2
 SAME_DISTANCE_COUNTER_THRESHOLD = 2
@@ -799,12 +799,15 @@ def exec_waypoint_nav_demo(args):
         counter_same_distance   = 0
         prev_distance_traffic   = 500
 
+
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
 
             # UPDATE HERE the obstacles list
             obstacles = []
+            collision_vehicles = []
+            collision_pedestrians = []
 
             # Update pose and timestamp
             prev_timestamp = current_timestamp
@@ -852,7 +855,7 @@ def exec_waypoint_nav_demo(args):
             ##########################################################################################
             ##########################################################################################
             if frame % LP_FREQUENCY_DIVISOR == 0:
-
+                
                 image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
             
                 image_RGB = cv2.resize(image_RGB, (416, 416))
@@ -880,7 +883,33 @@ def exec_waypoint_nav_demo(args):
                     #Visualization of the taken depth image
                     #cv2.imshow("DEPTH_IMAGE", depth_image)
                     #cv2.waitKey(1)
+                
+                
+                #Recovering information about pedestrians and other vehicles
+                for agent in measurement_data.non_player_agents:
+                    if agent.HasField('vehicle'):
+                        collision_vehicles.append(agent)
+                        #print('VEHICLE')
+                    if agent.HasField('pedestrian'):
+                        collision_pedestrians.append(agent)
+                        #print('PEDESTRIAN')
+                
+                # Taking the vehicles from the world
+                for agent in collision_vehicles:
+                    location = agent.vehicle.transform.location
+                    dimension = agent.vehicle.bounding_box.extent
+                    orientation = agent.vehicle.transform.rotation
+                    obstacles.append(obstacle_to_world(location, dimension, orientation))
 
+                # Taking the pedestrians from the world
+                for agent in collision_pedestrians:
+                    location = agent.pedestrian.transform.location
+                    dimension = agent.pedestrian.bounding_box.extent
+                    orientation = agent.pedestrian.transform.rotation
+                    obstacles.append(obstacle_to_world(location, dimension, orientation))
+
+                # Conversion to np array for plotting
+                obstacles = np.asarray(obstacles)
 
                 check_traffic_light_state(bp, traffic_light, current_speed)
             ####################################################################################################################################
@@ -949,10 +978,12 @@ def exec_waypoint_nav_demo(args):
                                 #best_path = [lp._prev_best_path[0][:INDEX_CUT_PATH],lp._prev_best_path[1][:INDEX_CUT_PATH],lp._prev_best_path[2][:INDEX_CUT_PATH]]
                                 for i in range(0, len(best_path[2])):
                                     if np.sqrt((best_path[i][0] - ego_state[0])**2 + (best_path[i][1] - ego_state[1])**2) > prev_distance_traffic:
-                                        best_path = [lp._prev_best_path[0][:i+3],lp._prev_best_path[1][:i+3],lp._prev_best_path[2][:i+3]]
+                                        best_path = [lp._prev_best_path[0][:i+3],lp._prev_best_path[1][:i+3],lp._prev_best_path[2][:i+1]]
                                         break
+                    elif(bp._traffic_flag == False):
+                        prev_distance_traffic = 500
 
-                        print('PREV_DISTANCE: ' + str(prev_distance_traffic))
+                    print('PREV_DISTANCE: ' + str(prev_distance_traffic))
                         
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
@@ -1010,7 +1041,7 @@ def exec_waypoint_nav_demo(args):
                 cmd_throttle = 0.0
                 cmd_steer = 0.0
                 cmd_brake = 0.0
-            """
+            
             # Skip the first frame or if there exists no local paths
             if skip_first_frame and frame == 0:
                 pass
@@ -1078,7 +1109,7 @@ def exec_waypoint_nav_demo(args):
                     lp_traj.refresh()
                     lp_1d.refresh()
                     live_plot_timer.lap()
-                """
+                
             # Output controller command to CARLA server
             send_control_command(client,
                                  throttle=cmd_throttle,
