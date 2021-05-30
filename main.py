@@ -49,8 +49,8 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 51    # spawn index for player
-DESTINATION_INDEX      = 64    # Setting a Destination HERE
+PLAYER_START_INDEX     = 105    # spawn index for player
+DESTINATION_INDEX      = 134    # Setting a Destination HERE
 NUM_PEDESTRIANS        = 300    # total number of pedestrians to spawn
 NUM_VEHICLES           = 200   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 20     # seed for pedestrian spawn randomizer
@@ -108,7 +108,7 @@ DIST_THRESHOLD_TO_LAST_WAYPOINT = 2.0  # some distance from last position before
 
 # Planning Constants
 NUM_PATHS = 7
-BP_LOOKAHEAD_BASE      = 16.0              # m
+BP_LOOKAHEAD_BASE      = 20.0              # m
 BP_LOOKAHEAD_TIME      = 1.0              # s
 PATH_OFFSET            = 1.5              # m
 CIRCLE_OFFSETS         = [-1.0, 1.0, 3.0] # m
@@ -546,7 +546,7 @@ def exec_waypoint_nav_demo(args):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 7.0
+        desired_speed = 5.0
         turn_speed    = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()
@@ -951,7 +951,6 @@ def exec_waypoint_nav_demo(args):
                 bp.transition_state(waypoints, ego_state, current_speed)
 
                 # Check to see if we need to follow the lead vehicle. #########################################################################
-                print(lead_car_pos[1])
                 bp.check_for_lead_vehicle(ego_state, lead_car_pos[1])
 
                 # Compute the goal state set from the behavioural planner's computed goal state.
@@ -964,13 +963,15 @@ def exec_waypoint_nav_demo(args):
                 paths = local_planner.transform_paths(paths, ego_state)
 
                 # Perform collision checking.
-                collision_check_array = lp._collision_checker.collision_check(paths,obstacles)
+                collision_check_array = lp._collision_checker.collision_check(paths,[])
 
                 # Compute the best local path.
                 best_index = lp._collision_checker.select_best_path_index(paths, collision_check_array, bp._goal_state)
                 # If no path was feasible, continue to follow the previous best path.
                 if best_index == None:
                     best_path = lp._prev_best_path
+                    # = [lp._prev_best_path[0][:i+2],lp._prev_best_path[1][:i+2],lp._prev_best_path[2][:i+2]]
+                    #decelerate_to_stop = True
                 else:
                     best_path = paths[best_index]
                     lp._prev_best_path = best_path
@@ -980,6 +981,7 @@ def exec_waypoint_nav_demo(args):
                     desired_speed = bp._goal_state[2]
                     #decelerate_to_stop = (bp._state == behavioural_planner.DECELERATE_TO_STOP or bp._state == behavioural_planner.STAY_STOPPED)
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
+                    
         ####################################################################################################################################
 
                     #Setting also the distance threshold from the traffic light in the if statement
@@ -1014,6 +1016,8 @@ def exec_waypoint_nav_demo(args):
                     #print('PREV_DISTANCE: ' + str(prev_distance_traffic))
                     
                     lead_car_state = [lead_car_pos[1][0], lead_car_pos[1][1], lead_car_speed[1]]
+                    print('LEAD CAR STATE: ' +str(lead_car_state))
+                    print('FOLLOW LEAD: ' + str(bp._follow_lead_vehicle))
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, lead_car_state, bp._follow_lead_vehicle)
 
