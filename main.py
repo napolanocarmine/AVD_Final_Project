@@ -50,10 +50,10 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 105    # spawn index for player
-DESTINATION_INDEX      = 134    # Setting a Destination HERE
-NUM_PEDESTRIANS        = 300    # total number of pedestrians to spawn
-NUM_VEHICLES           = 200   # total number of vehicles to spawn
+PLAYER_START_INDEX     = 15    # spawn index for player
+DESTINATION_INDEX      = 144   # Setting a Destination HERE
+NUM_PEDESTRIANS        = 0    # total number of pedestrians to spawn
+NUM_VEHICLES           = 180   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 20     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -934,13 +934,22 @@ def exec_waypoint_nav_demo(args):
                                 dimension = agent.vehicle.bounding_box.extent
                                 orientation = agent.vehicle.transform.rotation
                                 obstacles.append(obstacle_to_world(location, dimension, orientation))
-                                if(abs(ego_state[2]-orientation.yaw)<3):
-                                    lead_car_pos.append(
-                                    [agent.vehicle.transform.location.x,
-                                        agent.vehicle.transform.location.y])
-                                lead_car_length.append(agent.vehicle.bounding_box.extent.x)
-                                lead_car_speed.append(agent.vehicle.forward_speed)
-                            #print('VEHICLE')
+                                orientation= agent.vehicle.transform.rotation.roll
+                                orientationy = agent.vehicle.transform.rotation.pitch
+                                #print('PROVA EGO STATE',ego_state[2]-orientation)
+                                #if  ego_state[2]-orientation<0 and ego_state[2]-orientation>=-pi:
+                                    #print('CORSIA OPPOSTA')
+                                print('ORIENTATION',orientation,orientationy)
+                                print('EGO STATE',ego_state[2],current_pitch)
+                                if(abs(orientation - current_roll)>0):
+                                    if (abs (orientationy-current_pitch > 0)):
+                                        print('CORSIA BUONA')
+                                        lead_car_pos.append(
+                                        [agent.vehicle.transform.location.x,
+                                            agent.vehicle.transform.location.y])
+                                    lead_car_length.append(agent.vehicle.bounding_box.extent.x)
+                                    lead_car_speed.append(agent.vehicle.forward_speed)
+
                         elif agent.HasField('pedestrian'):
                             #print('PEDESTRIAN')
                             location = agent.pedestrian.transform.location
