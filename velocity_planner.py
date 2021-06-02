@@ -119,7 +119,7 @@ class VelocityPlanner:
         # If we need to follow the lead vehicle, make sure we decelerate to its
         # speed by the time we reach the time gap point.
         elif lead_car_state is not None and follow_lead_vehicle:
-            print('SONO ENTRATO')
+            #print('SONO ENTRATO')
             profile = self.follow_profile(path, start_speed, desired_speed, 
                                           lead_car_state)
 
