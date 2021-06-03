@@ -50,10 +50,10 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 15    # spawn index for player
-DESTINATION_INDEX      = 144   # Setting a Destination HERE
+PLAYER_START_INDEX     = 105    # spawn index for player
+DESTINATION_INDEX      = 134  # Setting a Destination HERE
 NUM_PEDESTRIANS        = 0    # total number of pedestrians to spawn
-NUM_VEHICLES           = 180   # total number of vehicles to spawn
+NUM_VEHICLES           = 100   # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 20     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -76,7 +76,7 @@ SAME_DISTANCE_COUNTER_THRESHOLD = 2
 STAY_STOPPED_DESIRED_SPEED = 0
 INDEX_CUT_PATH = 5
 
-COLLISION_RADIUS = 30
+COLLISION_RADIUS = 20
 
 WEATHERID = {
     "DEFAULT": 0,
@@ -119,7 +119,7 @@ PATH_SELECT_WEIGHT     = 10
 A_MAX                  = 2.5              # m/s^2
 SLOW_SPEED             = 2.0              # m/s
 STOP_LINE_BUFFER       = 2                # m
-LEAD_VEHICLE_LOOKAHEAD = 30.0             # m
+LEAD_VEHICLE_LOOKAHEAD = 20.0             # m
 LP_FREQUENCY_DIVISOR   = 2                # Frequency divisor to make the
                                           # local planner operate at a lower
                                           # frequency than the controller
@@ -805,7 +805,10 @@ def exec_waypoint_nav_demo(args):
 
         collision_flag = False
         obstacles = []
-
+        lead_car_pos = []
+        lead_car_length = []
+        lead_car_speed = []
+        lead_car_state = None
 
 
         for frame in range(TOTAL_EPISODE_FRAMES):
@@ -846,11 +849,12 @@ def exec_waypoint_nav_demo(args):
             ###################################################################################################
 
             #Initialize lead car parameters
-            lead_car_pos    = []
-            lead_car_length = []
-            lead_car_speed  = []
+            #lead_car_pos    = []
+            #lead_car_length = []
+            #lead_car_speed  = []
 
             # Obtain Lead Vehicle information.
+            '''
             for agent in measurement_data.non_player_agents:
                 agent_id = agent.id
                 #print(agent)
@@ -860,7 +864,7 @@ def exec_waypoint_nav_demo(args):
                                 agent.vehicle.transform.location.y])
                     lead_car_length.append(agent.vehicle.bounding_box.extent.x)
                     lead_car_speed.append(agent.vehicle.forward_speed)
-
+            '''
             ###################################################################################################
 
             # Execute the behaviour and local planning in the current instance
@@ -924,29 +928,31 @@ def exec_waypoint_nav_demo(args):
                     lead_car_length = []
                     lead_car_speed = []
                     obstacles = []
+                    count = 0
                     #print("ok")
                     #Recovering information about pedestrians and other vehicles
                     for agent in measurement_data.non_player_agents:
                         if agent.HasField('vehicle'):
                             location = agent.vehicle.transform.location
                             if np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2) <= COLLISION_RADIUS:
+                                #print('INFO VEICOLO', agent)
                                 #print("veicolo nei paraggi")
                                 dimension = agent.vehicle.bounding_box.extent
                                 orientation = agent.vehicle.transform.rotation
                                 obstacles.append(obstacle_to_world(location, dimension, orientation))
-                                orientation= agent.vehicle.transform.rotation.roll
-                                orientationy = agent.vehicle.transform.rotation.pitch
+                                orientation= agent.vehicle.transform.rotation.yaw
+                                #orientationy = agent.vehicle.transform.rotation.pitch
                                 #print('PROVA EGO STATE',ego_state[2]-orientation)
                                 #if  ego_state[2]-orientation<0 and ego_state[2]-orientation>=-pi:
                                     #print('CORSIA OPPOSTA')
-                                print('ORIENTATION',orientation,orientationy)
-                                print('EGO STATE',ego_state[2],current_pitch)
-                                if(abs(orientation - current_roll)>0):
-                                    if (abs (orientationy-current_pitch > 0)):
-                                        print('CORSIA BUONA')
-                                        lead_car_pos.append(
-                                        [agent.vehicle.transform.location.x,
-                                            agent.vehicle.transform.location.y])
+                                #print('ORIENTATION',orientation,orientationy)
+                                #print('EGO STATE',current_roll,current_pitch)
+                                new_ego_state= (ego_state[2]*180)/pi
+                                if(abs(orientation-new_ego_state)<=40):
+                                    count += 1
+                                    lead_car_pos.append(
+                                    [agent.vehicle.transform.location.x,
+                                        agent.vehicle.transform.location.y])
                                     lead_car_length.append(agent.vehicle.bounding_box.extent.x)
                                     lead_car_speed.append(agent.vehicle.forward_speed)
 
@@ -959,8 +965,10 @@ def exec_waypoint_nav_demo(args):
                                 orientation = agent.pedestrian.transform.rotation
                                 obstacles.append(obstacle_to_world(location, dimension, orientation))
 
+
                     # Conversion to np array for plotting
                     obstacles = np.asarray(obstacles)
+                    print('SONO ENTRATO NEL COLLISION RADIUS ', count, 'VOLTE')
                     collision_flag = False
                 else:
                     collision_flag = True
@@ -976,6 +984,7 @@ def exec_waypoint_nav_demo(args):
 
                 # Check to see if we need to follow the lead vehicle. #########################################################################
                 if(len(lead_car_pos)!=0):
+                    print(len(lead_car_pos))
                     bp.check_for_lead_vehicle(ego_state, lead_car_pos[0])
                 
 
@@ -1040,11 +1049,12 @@ def exec_waypoint_nav_demo(args):
                         prev_distance_traffic = 500
 
                     #print('PREV_DISTANCE: ' + str(prev_distance_traffic))
-
                     if (len(lead_car_pos) != 0):
                         lead_car_state = [lead_car_pos[0][0], lead_car_pos[0][1], lead_car_speed[0]]
-                        print('LEAD CAR STATE: ' +str(lead_car_state))
-                        print('FOLLOW LEAD: ' + str(bp._follow_lead_vehicle))
+                    else:
+                        lead_car_state=None
+                        #print('LEAD CAR STATE: ' +str(lead_car_state))
+                        #print('FOLLOW LEAD: ' + str(bp._follow_lead_vehicle))
         ####################################################################################################################################
                     local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, lead_car_state, bp._follow_lead_vehicle)
 
