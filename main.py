@@ -76,7 +76,7 @@ SAME_DISTANCE_COUNTER_THRESHOLD = 2
 STAY_STOPPED_DESIRED_SPEED = 0
 INDEX_CUT_PATH = 5
 
-COLLISION_RADIUS = 20
+COLLISION_RADIUS = 30
 
 WEATHERID = {
     "DEFAULT": 0,
@@ -928,33 +928,29 @@ def exec_waypoint_nav_demo(args):
                     lead_car_length = []
                     lead_car_speed = []
                     obstacles = []
+                    min_distance=100
                     count = 0
                     #print("ok")
                     #Recovering information about pedestrians and other vehicles
                     for agent in measurement_data.non_player_agents:
                         if agent.HasField('vehicle'):
                             location = agent.vehicle.transform.location
-                            if np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2) <= COLLISION_RADIUS:
-                                #print('INFO VEICOLO', agent)
-                                #print("veicolo nei paraggi")
+                            agent_distance= np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2)
+                            if agent_distance <= COLLISION_RADIUS:
                                 dimension = agent.vehicle.bounding_box.extent
                                 orientation = agent.vehicle.transform.rotation
                                 obstacles.append(obstacle_to_world(location, dimension, orientation))
                                 orientation= agent.vehicle.transform.rotation.yaw
-                                #orientationy = agent.vehicle.transform.rotation.pitch
-                                #print('PROVA EGO STATE',ego_state[2]-orientation)
-                                #if  ego_state[2]-orientation<0 and ego_state[2]-orientation>=-pi:
-                                    #print('CORSIA OPPOSTA')
-                                #print('ORIENTATION',orientation,orientationy)
-                                #print('EGO STATE',current_roll,current_pitch)
+
                                 new_ego_state= (ego_state[2]*180)/pi
                                 if(abs(orientation-new_ego_state)<=40):
-                                    count += 1
-                                    lead_car_pos.append(
-                                    [agent.vehicle.transform.location.x,
-                                        agent.vehicle.transform.location.y])
-                                    lead_car_length.append(agent.vehicle.bounding_box.extent.x)
-                                    lead_car_speed.append(agent.vehicle.forward_speed)
+                                    if(bp.check_for_lead_vehicle2(ego_state,[agent.vehicle.transform.location.x,agent.vehicle.transform.location.y])):
+                                        if (agent_distance < min_distance):
+                                            min_distance = agent_distance
+                                            lead_car_pos =[[agent.vehicle.transform.location.x,
+                                                agent.vehicle.transform.location.y]]
+                                            lead_car_length = [agent.vehicle.bounding_box.extent.x]
+                                            lead_car_speed = [agent.vehicle.forward_speed]
 
                         elif agent.HasField('pedestrian'):
                             #print('PEDESTRIAN')
@@ -968,7 +964,7 @@ def exec_waypoint_nav_demo(args):
 
                     # Conversion to np array for plotting
                     obstacles = np.asarray(obstacles)
-                    print('SONO ENTRATO NEL COLLISION RADIUS ', count, 'VOLTE')
+                    #print('SONO ENTRATO NEL COLLISION RADIUS ', count, 'VOLTE')
                     collision_flag = False
                 else:
                     collision_flag = True
@@ -984,8 +980,11 @@ def exec_waypoint_nav_demo(args):
 
                 # Check to see if we need to follow the lead vehicle. #########################################################################
                 if(len(lead_car_pos)!=0):
-                    print(len(lead_car_pos))
-                    bp.check_for_lead_vehicle(ego_state, lead_car_pos[0])
+                    #print(len(lead_car_pos))
+                    #bp.check_for_lead_vehicle(ego_state, lead_car_pos[0])
+                    bp._follow_lead_vehicle=True
+                else:
+                    bp._follow_lead_vehicle=False
                 
 
                 # Compute the goal state set from the behavioural planner's computed goal state.

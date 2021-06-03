@@ -255,6 +255,7 @@ class BehaviouralPlanner:
             # vehicle lies within +/- 45 degrees of the ego vehicle's heading.
             if np.dot(lead_car_delta_vector, 
                       ego_heading_vector) < (1 / math.sqrt(2)):
+                print('LA MACCHINA SI TROVA DIETRO')
                 return
 
             self._follow_lead_vehicle = True
@@ -275,6 +276,27 @@ class BehaviouralPlanner:
                 return
 
             self._follow_lead_vehicle = False
+
+
+    def check_for_lead_vehicle2(self, ego_state, lead_car_position):
+         # Compute the angle between the normalized vector between the lead vehicle
+         # and ego vehicle position with the ego vehicle's heading vector.
+         lead_car_delta_vector = [lead_car_position[0] - ego_state[0],
+                                  lead_car_position[1] - ego_state[1]]
+         lead_car_distance = np.linalg.norm(lead_car_delta_vector)
+         # In this case, the car is too far away.
+
+         lead_car_delta_vector = np.divide(lead_car_delta_vector,
+                                           lead_car_distance)
+         ego_heading_vector = [math.cos(ego_state[2]),
+                               math.sin(ego_state[2])]
+         # Check to see if the relative angle between the lead vehicle and the ego
+         # vehicle lies within +/- 45 degrees of the ego vehicle's heading.
+         if np.dot(lead_car_delta_vector,
+                   ego_heading_vector) < (1 / math.sqrt(2)):
+             print('LA MACCHINA SI TROVA DIETRO')
+             return False
+         return True
 
 # Compute the waypoint index that is closest to the ego vehicle, and return
 # it as well as the distance from the ego vehicle to that waypoint.
