@@ -32,29 +32,17 @@ from carla.controller import utils
 from carla.sensor import Camera
 from carla.image_converter import labels_to_array, depth_to_array, to_bgra_array
 from carla.planner.city_track import CityTrack
-import carla.image_converter as image_converter
-from traffic_light_detection_module.detect_carla_images import *
-from traffic_light_detection_module.predict import *
-from behavioural_planner import DECELERATE_TO_STOP, STAY_STOPPED, check_traffic_light_state
 
-
-###############################################################################
-# LOADING MODEL
-###############################################################################
-file_path = 'traffic_light_detection_module/config.json'
-with open(file_path) as config_buffer:
-    config = json.loads(config_buffer.read())
-model = get_model(config)
 
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 105     #  spawn index for player
-DESTINATION_INDEX      = 134     # Setting a Destination HERE
-NUM_PEDESTRIANS        = 0     # total number of pedestrians to spawn
-NUM_VEHICLES           = 100     # total number of vehicles to spawn
+PLAYER_START_INDEX = 90        #  spawn index for player
+DESTINATION_INDEX = 134        # Setting a Destination HERE
+NUM_PEDESTRIANS        = 30     # total number of pedestrians to spawn
+NUM_VEHICLES           = 30      # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
-SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
+SEED_VEHICLES          = 0     # seed for vehicle spawn randomizer
 ###############################################################################àà
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
@@ -64,21 +52,6 @@ TOTAL_FRAME_BUFFER     = 300    # number of frames to buffer after total runtime
 CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
                                 # used to make sure the server loads
                                 # consistently
-
-###############################################################################
-# CONFIGURABLE PARAMENTERS OF TRAFFIC LIGHT MANAGEMENT
-###############################################################################
-MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 3
-MAX_DISTANCE_FROM_TRAFFIC_LIGHT = 10
-SHORT_DISTANCE_COUNTER_THRESHOLD = 2
-SAME_DISTANCE_COUNTER_THRESHOLD = 2
-STAY_STOPPED_DESIRED_SPEED = 0
-INDEX_CUT_PATH = 5
-
-###############################################################################
-# CONFIGURABLE PARAMENTERS OF COLLISION OBJECTS E LEAD VEHICLES
-###############################################################################
-COLLISION_RADIUS = 30
 
 WEATHERID = {
     "DEFAULT": 0,
@@ -111,7 +84,7 @@ DIST_THRESHOLD_TO_LAST_WAYPOINT = 2.0  # some distance from last position before
 
 # Planning Constants
 NUM_PATHS = 7
-BP_LOOKAHEAD_BASE      = 20.0              # m
+BP_LOOKAHEAD_BASE      = 16.0              # m
 BP_LOOKAHEAD_TIME      = 1.0              # s
 PATH_OFFSET            = 1.5              # m
 CIRCLE_OFFSETS         = [-1.0, 1.0, 3.0] # m
@@ -232,15 +205,6 @@ def make_carla_settings(args):
     camera_fov = camera_parameters['fov']
 
     # Declare here your sensors
-    camera0 = Camera('CameraRGB')
-    camera0.set_image_size(600,600)
-    camera0.set_position(0.30, 0, 1.30)
-    settings.add_sensor(camera0)
-
-    camera1 = Camera('CameraDepth', PostProcessing='Depth')
-    camera1.set_image_size(600,600)
-    camera1.set_position(0.30, 0, 1.30)
-    settings.add_sensor(camera1)
 
     return settings
 
@@ -811,24 +775,12 @@ def exec_waypoint_nav_demo(args):
         prev_collision_pedestrians = 0
         prev_collision_other       = 0
 
-        # Initialize traffic light parameters
-        counter_short_distance  = 0
-        counter_same_distance   = 0
-        prev_distance_traffic   = 500
-        traffic_light = []
-        detection_flag = False
-
-        collision_flag = False
-        obstacles = []
-        lead_car_pos = []
-        lead_car_length = []
-        lead_car_speed = []
-        lead_car_state = None
-
-
         for frame in range(TOTAL_EPISODE_FRAMES):
             # Gather current data from the CARLA server
             measurement_data, sensor_data = client.read_data()
+
+            # UPDATE HERE the obstacles list
+            obstacles = []
 
             # Update pose and timestamp
             prev_timestamp = current_timestamp
@@ -876,108 +828,12 @@ def exec_waypoint_nav_demo(args):
                 # Calculate the goal state set in the local frame for the local planner.
                 # Current speed should be open loop for the velocity profile generation.
                 ego_state = [current_x, current_y, current_yaw, open_loop_speed]
-                
+
                 # Set lookahead based on current speed.
                 bp.set_lookahead(BP_LOOKAHEAD_BASE + BP_LOOKAHEAD_TIME * open_loop_speed)
 
-                #CHECK FOR TRAFFIC LIGHT
-                
-                if detection_flag == True:
-                    detection_flag == False
-                    #print("ci sono")
-                    image_RGB = image_converter.to_bgra_array(sensor_data["CameraRGB"])
-                
-                    image_RGB = cv2.resize(image_RGB, (416, 416))
-                    #cv2.imshow("RGB_IMAGE", image_RGB)
-                    #cv2.waitKey(1)
-                    depth_image=image_converter.to_bgra_array(sensor_data["CameraDepth"])
-                    depth_image = cv2.resize(depth_image, (416,416))
-                    
-                    traffic_light= detect_on_carla_image(model,image_RGB)
-                elif detection_flag == False:
-                    detection_flag = True
-                #print(traffic_light)
-
-                #Computing of the distance from the traffic light using a depth camera
-                if(len(traffic_light)!=0):
-                    x=traffic_light[0][2]
-                    y=traffic_light[0][3]
-                    pixel = depth_image[x][y]
-                    B = pixel[0]
-                    G = pixel[1]
-                    R = pixel[2]
-                    normalized = (R + G * 256 + B * 256 * 256) / (256 * 256 * 256 - 1)
-                    #Computing in meter the distance from the traffic light
-                    distance_from_traffic_light = 1000 * normalized
-                    #print('Ecco la distanza che volevi ', distance_from_traffic_light)
-                    #depth_image=cv2.circle(depth_image,(x,y),radius=3,color=(255, 255, 255),thickness=-1)
-                    #Visualization of the taken depth image
-                    #cv2.imshow("DEPTH_IMAGE", depth_image)
-                    #cv2.waitKey(1)
-                
-                check_traffic_light_state(bp, traffic_light, current_speed)
-                
-                # UPDATE HERE the obstacles list
-                if collision_flag == True:
-                    lead_car_pos = []
-                    obstacles = []
-                    min_distance=100
-                    count = 0
-                    #print("ok")
-                    #Recovering information about pedestrians and other vehicles
-                    for agent in measurement_data.non_player_agents:
-                        if agent.HasField('vehicle'):
-                            location = agent.vehicle.transform.location
-                            agent_vehicle_distance= np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2)
-                            if agent_vehicle_distance <= COLLISION_RADIUS:
-                                dimension = agent.vehicle.bounding_box.extent
-                                orientation = agent.vehicle.transform.rotation
-
-                                yaw = agent.vehicle.transform.rotation.yaw
-                                new_ego_state= (ego_state[2]*180)/pi
-
-                                if(abs(yaw-new_ego_state)<=40):
-                                    speed = agent.vehicle.forward_speed
-                                    if speed <= 1:
-                                        obstacles.append(obstacle_to_world(location, dimension, orientation))
-                                    if agent_vehicle_distance <= 20:
-                                        if(bp.check_for_lead_vehicle2(ego_state,[location.x,location.y])): #se il veicolo è davanti a noi
-                                            if (agent_vehicle_distance < min_distance):
-                                                min_distance = agent_vehicle_distance
-                                                lead_car_pos =[[location.x,location.y]]
-                                                lead_car_length = [dimension.x]
-                                                lead_car_speed = [speed]
-                                else:
-                                    obstacles.append(obstacle_to_world(location, dimension, orientation))
-
-                        elif agent.HasField('pedestrian'):
-                            #print('PEDESTRIAN')
-                            location = agent.pedestrian.transform.location
-                            agent_pedestrian_distance= np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2)
-                            if agent_pedestrian_distance <= COLLISION_RADIUS:
-                                #print("pedone nei paraggi")
-                                dimension = agent.pedestrian.bounding_box.extent
-                                orientation = agent.pedestrian.transform.rotation
-                                obstacles.append(obstacle_to_world(location, dimension, orientation))
-
-
-                    # Conversion to np array for plotting
-                    obstacles = np.asarray(obstacles)
-                    #print('SONO ENTRATO NEL COLLISION RADIUS ', count, 'VOLTE')
-                    collision_flag = False
-                else:
-                    collision_flag = True
-
                 # Perform a state transition in the behavioural planner.
                 bp.transition_state(waypoints, ego_state, current_speed)
-
-                # Check to see if we need to follow the lead vehicle. #########################################################################
-                if(len(lead_car_pos)!=0):
-                    #print(len(lead_car_pos))
-                    #bp.check_for_lead_vehicle(ego_state, lead_car_pos[0])
-                    bp._follow_lead_vehicle=True
-                else:
-                    bp._follow_lead_vehicle=False
 
                 # Compute the goal state set from the behavioural planner's computed goal state.
                 goal_state_set = lp.get_goal_state_set(bp._goal_index, bp._goal_state, waypoints, ego_state)
@@ -989,15 +845,13 @@ def exec_waypoint_nav_demo(args):
                 paths = local_planner.transform_paths(paths, ego_state)
 
                 # Perform collision checking.
-                collision_check_array = lp._collision_checker.collision_check(paths, obstacles)
+                collision_check_array = lp._collision_checker.collision_check(paths, [])
 
                 # Compute the best local path.
                 best_index = lp._collision_checker.select_best_path_index(paths, collision_check_array, bp._goal_state)
                 # If no path was feasible, continue to follow the previous best path.
                 if best_index == None:
                     best_path = lp._prev_best_path
-                    # = [lp._prev_best_path[0][:i+2],lp._prev_best_path[1][:i+2],lp._prev_best_path[2][:i+2]]
-                    #decelerate_to_stop = True
                 else:
                     best_path = paths[best_index]
                     lp._prev_best_path = best_path
@@ -1006,46 +860,7 @@ def exec_waypoint_nav_demo(args):
                     # Compute the velocity profile for the path, and compute the waypoints.
                     desired_speed = bp._goal_state[2]
                     decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
-
-                    if(bp._traffic_flag == True):
-
-                        if bp._state == behavioural_planner.STAY_STOPPED:
-                            desired_speed = STAY_STOPPED_DESIRED_SPEED
-
-                        if prev_distance_traffic > distance_from_traffic_light:
-                            counter_same_distance += 1
-                            if counter_same_distance > SAME_DISTANCE_COUNTER_THRESHOLD:
-                                counter_same_distance = 0
-                                prev_distance_traffic = distance_from_traffic_light
-
-                        if prev_distance_traffic <= MAX_DISTANCE_FROM_TRAFFIC_LIGHT and prev_distance_traffic > MIN_DISTANCE_FROM_TRAFFIC_LIGHT:
-                            best_path = lp._prev_best_path
-
-                        elif prev_distance_traffic <= MIN_DISTANCE_FROM_TRAFFIC_LIGHT:
-                            counter_short_distance += 1
-                            best_path = lp._prev_best_path
-                            if counter_short_distance >= SHORT_DISTANCE_COUNTER_THRESHOLD:
-                                if bp._state == behavioural_planner.STAY_STOPPED:
-                                    counter_short_distance = 0
-                                #best_path = [lp._prev_best_path[0][:INDEX_CUT_PATH],lp._prev_best_path[1][:INDEX_CUT_PATH],lp._prev_best_path[2][:INDEX_CUT_PATH]]
-                                for i in range(0, len(best_path[2])):
-                                    if np.sqrt((best_path[i][0] - ego_state[0])**2 + (best_path[i][1] - ego_state[1])**2) > prev_distance_traffic:
-                                        best_path = [lp._prev_best_path[0][:i+3],lp._prev_best_path[1][:i+3],lp._prev_best_path[2][:i+1]]
-                                        break
-                    elif(bp._traffic_flag == False):
-                        prev_distance_traffic = 500
-
-                    #print('PREV_DISTANCE: ' + str(prev_distance_traffic))
-                    if (len(lead_car_pos) != 0):
-                        lead_car_state = [lead_car_pos[0][0], lead_car_pos[0][1], lead_car_speed[0]]
-                    else:
-                        lead_car_state=None
-                        #print('LEAD CAR STATE: ' +str(lead_car_state))
-                        #print('FOLLOW LEAD: ' + str(bp._follow_lead_vehicle))
-                    
-                    ########################################################################################################################
-
-                    local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, lead_car_state, bp._follow_lead_vehicle)
+                    local_waypoints = lp._velocity_planner.compute_velocity_profile(best_path, desired_speed, ego_state, current_speed, decelerate_to_stop, None, bp._follow_lead_vehicle)
 
                     if local_waypoints != None:
                         # Update the controller waypoint path with the best local path.
@@ -1110,10 +925,6 @@ def exec_waypoint_nav_demo(args):
                 # Update live plotter with new feedback
                 trajectory_fig.roll("trajectory", current_x, current_y)
                 trajectory_fig.roll("car", current_x, current_y)
-
-                if lead_car_pos:    # If there exists a lead car, plot it
-                    trajectory_fig.roll("leadcar", lead_car_pos[0][0],
-                                        lead_car_pos[0][1])
                 
                 # Load parked car points
                 if len(obstacles) > 0:
