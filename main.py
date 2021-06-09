@@ -49,10 +49,10 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 90     #  spawn index for player
-DESTINATION_INDEX      = 134     # Setting a Destination HERE
-NUM_PEDESTRIANS        = 150     # total number of pedestrians to spawn
-NUM_VEHICLES           = 0     # total number of vehicles to spawn
+PLAYER_START_INDEX     = 7     #  spawn index for player
+DESTINATION_INDEX      = 15     # Setting a Destination HERE
+NUM_PEDESTRIANS        = 50     # total number of pedestrians to spawn
+NUM_VEHICLES           = 50     # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -83,8 +83,8 @@ COLLISION_RADIUS = 30
 ###############################################################################
 # ACTIVE OR DISACTIVE EVERY SINGLE FUNCTIONS OF OUR PROJECT
 ###############################################################################
-TRACK_TRAFFIC_LIGHT = False
-FOLLOW_LEAD_VEHICLE = False
+TRACK_TRAFFIC_LIGHT = True
+FOLLOW_LEAD_VEHICLE = True
 OBSTACLE_AVOIDANCE =  True
 
 WEATHERID = {
@@ -555,7 +555,7 @@ def exec_waypoint_nav_demo(args):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 6.0
+        desired_speed = 5.0
         turn_speed = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()

@@ -98,7 +98,7 @@ class CollisionChecker:
             if (count> len(collision_check_array)-3 and temp == True):
                 collision_check_array_without_off_road[count]=False
             else:
-                collision_check_array_without_off_road[count]=True
+                collision_check_array_without_off_road[count]=temp
             count+=1
 
         return collision_check_array_without_off_road
