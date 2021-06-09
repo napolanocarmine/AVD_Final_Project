@@ -89,8 +89,19 @@ class CollisionChecker:
                     break
 
             collision_check_array[i] = collision_free
+        ###########################################################################
+        ######################### GESTIONE OFF ROAD################################
+        ###########################################################################
+        count=0
+        collision_check_array_without_off_road=np.zeros(len(paths), dtype=bool)
+        for temp in collision_check_array:
+            if (count> len(collision_check_array)-3 and temp == True):
+                collision_check_array_without_off_road[count]=False
+            else:
+                collision_check_array_without_off_road[count]=temp
+            count+=1
 
-        return collision_check_array
+        return collision_check_array_without_off_road
 
     # Selects the best path in the path set, according to how closely
     # it follows the lane centerline, and how far away it is from other
