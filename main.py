@@ -49,11 +49,11 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 7     #  spawn index for player
-DESTINATION_INDEX      = 15     # Setting a Destination HERE
-NUM_PEDESTRIANS        = 50     # total number of pedestrians to spawn
-NUM_VEHICLES           = 50     # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
+PLAYER_START_INDEX     = 150     #  spawn index for player
+DESTINATION_INDEX      = 12     # Setting a Destination HERE
+NUM_PEDESTRIANS        = 4000     # total number of pedestrians to spawn
+NUM_VEHICLES           = 0     # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 39      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
 
@@ -83,7 +83,7 @@ COLLISION_RADIUS = 30
 ###############################################################################
 # ACTIVE OR DISACTIVE EVERY SINGLE FUNCTIONS OF OUR PROJECT
 ###############################################################################
-TRACK_TRAFFIC_LIGHT = True
+TRACK_TRAFFIC_LIGHT = False
 FOLLOW_LEAD_VEHICLE = True
 OBSTACLE_AVOIDANCE =  True
 
@@ -118,7 +118,7 @@ DIST_THRESHOLD_TO_LAST_WAYPOINT = 2.0  # some distance from last position before
 
 # Planning Constants
 NUM_PATHS = 7
-BP_LOOKAHEAD_BASE      = 16.0              # m #A 20 SI ROMPONO LE CURVE
+BP_LOOKAHEAD_BASE      = 16.0             # m #A 20 SI ROMPONO LE CURVE
 BP_LOOKAHEAD_TIME      = 1.0              # s
 PATH_OFFSET            = 1.5              # m
 CIRCLE_OFFSETS         = [-1.0, 1.0, 3.0] # m
@@ -555,7 +555,7 @@ def exec_waypoint_nav_demo(args):
 
         waypoints = []
         waypoints_route = mission_planner.compute_route(source, source_ori, destination, destination_ori)
-        desired_speed = 5.0
+        desired_speed = 9.0
         turn_speed = 2.5
 
         intersection_nodes = mission_planner.get_intersection_nodes()
@@ -939,19 +939,27 @@ def exec_waypoint_nav_demo(args):
                             if agent.HasField('vehicle'):
                                 location = agent.vehicle.transform.location
                                 agent_vehicle_distance= np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2)
+
                                 if agent_vehicle_distance <= COLLISION_RADIUS:
                                     dimension = agent.vehicle.bounding_box.extent
                                     orientation = agent.vehicle.transform.rotation
 
                                     yaw = agent.vehicle.transform.rotation.yaw
                                     new_ego_state= (ego_state[2]*180)/pi
-
-                                    if(abs(yaw-new_ego_state)<=40):
+                                    
+                                    #print('######################### yaw: ', yaw)
+                                    #print('######################### ego_state_yaw: ', new_ego_state)
+                                    #print('######################### differenza: ', yaw-new_ego_state)
+                                    if abs(yaw-new_ego_state) <= 40:
                                         speed = agent.vehicle.forward_speed
-                                        if speed >=-1 and speed<=2.5:
-                                            obstacles.append(obstacle_to_world(location, dimension, orientation))
+
+                                        #controllo sulla velocità del veicolo che stiamo inseguendo
+                                        #if speed >=-1 and speed <=2.5:
+                                        # obstacles.append(obstacle_to_world(location, dimension, orientation))
+
+                                        #controllo sulla distanza che abbiamo dal veicolo davanti a noi
                                         if agent_vehicle_distance <= 20:
-                                            if(bp.check_for_lead_vehicle2(ego_state,[location.x,location.y])): #se il veicolo è davanti a noi
+                                            if bp.check_for_lead_vehicle2(ego_state,[location.x,location.y]): #se il veicolo è davanti a noi
                                                 if (agent_vehicle_distance < min_distance):
                                                     min_distance = agent_vehicle_distance
                                                     lead_car_pos =[[location.x,location.y]]
@@ -1002,12 +1010,15 @@ def exec_waypoint_nav_demo(args):
 
                 # Compute the best local path.
                 best_index = lp._collision_checker.select_best_path_index(paths, collision_check_array, bp._goal_state)
+
                 # If no path was feasible, continue to follow the previous best path.
                 if best_index == None:
-                    best_path = lp._prev_best_path
+                    #best_path = lp._prev_best_path
+                    bp._state = behavioural_planner.DECELERATE_TO_STOP
                     # = [lp._prev_best_path[0][:i+2],lp._prev_best_path[1][:i+2],lp._prev_best_path[2][:i+2]]
                     #decelerate_to_stop = True
                 else:
+                    bp._state = behavioural_planner.FOLLOW_LANE
                     best_path = paths[best_index]
                     lp._prev_best_path = best_path
 
