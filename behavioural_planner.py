@@ -12,12 +12,6 @@ STOP_THRESHOLD = 1
 # Number of cycles before moving from stop sign.
 STOP_COUNTS = 10
 
-"""
-count = 0
-count_red = 0
-count_green = 0
-traffic_flag=False
-"""
 
 class BehaviouralPlanner:
     def __init__(self, lookahead, lead_vehicle_lookahead):
@@ -126,11 +120,6 @@ class BehaviouralPlanner:
         # the stop sign and transition to the next state.
         elif self._state == STAY_STOPPED:
             print('SONO IN STAY STOPPED')
-            # We have stayed stopped for the required number of cycles.
-            # Allow the ego vehicle to leave the stop sign. Once it has
-            # passed the stop sign, return to lane following.
-            # You should use the get_closest_index(), get_goal_index(), and 
-            # check_for_stop_signs() helper functions.
             """
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
             goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
@@ -138,18 +127,10 @@ class BehaviouralPlanner:
             waypoints[goal_index][2] = 0
             """         
 
-            # We've stopped for the required amount of time, so the new goal 
-            # index for the stop line is not relevant. Use the goal index
-            # that is the lookahead distance away. 
             """
             self._goal_index = goal_index
             self._goal_state = waypoints[goal_index]
             """
-
-            # If the stop sign is no longer along our path, we can now
-            # transition back to our lane following state.
-            
-            #if not stop_sign_found: self._state = FOLLOW_LANE
 
             if ((self._green_count > 10  and self._traffic_light_state == 'go') or self._red_count==0 and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
                 self._state = FOLLOW_LANE
