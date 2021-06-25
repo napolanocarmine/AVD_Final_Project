@@ -114,6 +114,7 @@ class VelocityPlanner:
         start_speed = ego_state[3]
         # Generate a trapezoidal profile to decelerate to stop.
         if decelerate_to_stop:
+            #print('ENTRO IN DECELERAE TO STOP NEL VELOCITY PLANNER')
             profile = self.decelerate_profile(path, start_speed)
 
         # If we need to follow the lead vehicle, make sure we decelerate to its
@@ -207,8 +208,8 @@ class VelocityPlanner:
         # perform a smooth deceleration and require a harder deceleration. Build
         # the path up in reverse to ensure we reach zero speed at the required
         # time.
-        print('PATH LENGHT: ' +str(path_length))
-        print('SOMMA ' + str(brake_distance + decel_distance + stop_line_buffer))
+        #print('PATH LENGHT: ' +str(path_length))
+        #print('SOMMA ' + str(brake_distance + decel_distance + stop_line_buffer))
         if brake_distance + decel_distance + stop_line_buffer > path_length:
             print('###################################################')
             print('SONO ENTRATO NELLIF DI FRENATA BRUSCA')
