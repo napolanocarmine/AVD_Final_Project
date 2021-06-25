@@ -836,7 +836,7 @@ def exec_waypoint_nav_demo(args):
         lead_car_length = []
         lead_car_speed = []
         lead_car_state = None
-        obstacles_type = []   ###########################################################################################
+        obstacles_type = []  
 
 
         for frame in range(TOTAL_EPISODE_FRAMES):
@@ -920,7 +920,6 @@ def exec_waypoint_nav_demo(args):
                         normalized = (R + G * 256 + B * 256 * 256) / (256 * 256 * 256 - 1)
                         #Computing in meter the distance from the traffic light
                         distance_from_traffic_light = 1000 * normalized
-                        #print('Ecco la distanza che volevi ', distance_from_traffic_light)
                         #depth_image=cv2.circle(depth_image,(x,y),radius=3,color=(255, 255, 255),thickness=-1)
                         #Visualization of the taken depth image
                         #cv2.imshow("DEPTH_IMAGE", depth_image)
@@ -934,7 +933,6 @@ def exec_waypoint_nav_demo(args):
                         obstacles = []
                         min_distance=100
                         count = 0
-                        #print("ok")
                         #Recovering information about pedestrians and other vehicles
                         for agent in measurement_data.non_player_agents:
                             if agent.HasField('vehicle'):
@@ -960,7 +958,7 @@ def exec_waypoint_nav_demo(args):
                                                     lead_car_speed = [speed]
                                     else:
                                         obstacles.append(obstacle_to_world(location, dimension, orientation))
-                                        obstacles_type.append('vehicle')###########################################################################
+                                        obstacles_type.append('vehicle')
 
                             elif agent.HasField('pedestrian'):
                                 location = agent.pedestrian.transform.location
@@ -970,11 +968,10 @@ def exec_waypoint_nav_demo(args):
                                     dimension = agent.pedestrian.bounding_box.extent
                                     orientation = agent.pedestrian.transform.rotation
                                     obstacles.append(obstacle_to_world(location, dimension, orientation))
-                                    obstacles_type.append('pedestrian')                                ###########################################
+                                    obstacles_type.append('pedestrian')
 
                         # Conversion to np array for plotting
                         obstacles = np.asarray(obstacles)
-                        #print('SONO ENTRATO NEL COLLISION RADIUS ', count, 'VOLTE')
                         collision_flag = False
                     else:
                         collision_flag = True
@@ -1001,7 +998,6 @@ def exec_waypoint_nav_demo(args):
 
                 # Perform collision checking.
                 collision_check_array,stop_flag = lp._collision_checker.collision_check(paths,obstacles,obstacles_type)
-                #print(stop_flag)
                 #check_obstacle_state(bp,stop_flag)
                 check_state(bp, traffic_light, stop_flag)
 
@@ -1055,8 +1051,6 @@ def exec_waypoint_nav_demo(args):
                         lead_car_state = [lead_car_pos[0][0], lead_car_pos[0][1], lead_car_speed[0]]
                     else:
                         lead_car_state=None
-                        #print('LEAD CAR STATE: ' +str(lead_car_state))
-                        #print('FOLLOW LEAD: ' + str(bp._follow_lead_vehicle))
                     
                     ########################################################################################################################
                     if bp._state == behavioural_planner.STOP_AT_OBSTACLE:
