@@ -105,7 +105,7 @@ class CollisionChecker:
                 count2 += 1
         else:
             for temp in collision_check_array:
-                if (count> len(collision_check_array)-4 and temp == True or (count < 4 and temp == True)):
+                if (count> len(collision_check_array)-4 and temp == True or (count < 3 and temp == True)):
                     collision_check_array_without_off_road[count]=False
                 else:
                     collision_check_array_without_off_road[count]=temp

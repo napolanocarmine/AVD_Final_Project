@@ -51,8 +51,8 @@ model = get_model(config)
 ###############################################################################
 PLAYER_START_INDEX     = 105     #  spawn index for player
 DESTINATION_INDEX      = 134     # Setting a Destination HERE
-NUM_PEDESTRIANS        = 650     # total number of pedestrians to spawn
-NUM_VEHICLES           = 350     # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
+NUM_VEHICLES           = 500     # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -83,7 +83,7 @@ COLLISION_RADIUS = 30
 ###############################################################################
 # ACTIVE OR DISACTIVE EVERY SINGLE FUNCTIONS OF OUR PROJECT
 ###############################################################################
-TRACK_TRAFFIC_LIGHT = True
+TRACK_TRAFFIC_LIGHT = False
 FOLLOW_LEAD_VEHICLE = True
 OBSTACLE_AVOIDANCE =  True
 
@@ -119,8 +119,8 @@ DIST_THRESHOLD_TO_LAST_WAYPOINT = 2.0  # some distance from last position before
 # Planning Constants
 NUM_PATHS = 11
 BP_LOOKAHEAD_BASE      = 16.0              # m #A 20 SI ROMPONO LE CURVE
-BP_LOOKAHEAD_TIME      = 1.0              # s
-PATH_OFFSET            = 1.5              # m
+BP_LOOKAHEAD_TIME      = 0.5              # s
+PATH_OFFSET            = 1              # m
 CIRCLE_OFFSETS         = [-1.0, 1.0, 3.0] # m
 CIRCLE_RADII           = [1.5, 1.5, 1.5]  # m
 TIME_GAP               = 1.0              # s
@@ -931,6 +931,7 @@ def exec_waypoint_nav_demo(args):
                     if collision_flag == True:
                         lead_car_pos = []
                         obstacles = []
+                        obstacles_type = []
                         min_distance=100
                         count = 0
                         #Recovering information about pedestrians and other vehicles
@@ -964,7 +965,7 @@ def exec_waypoint_nav_demo(args):
                             elif agent.HasField('pedestrian'):
                                 location = agent.pedestrian.transform.location
                                 agent_pedestrian_distance= np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2)
-                                if agent_pedestrian_distance <= BP_LOOKAHEAD_BASE-6:
+                                if agent_pedestrian_distance <= BP_LOOKAHEAD_BASE-4.2:
                                     #print("pedone nei paraggi")
                                     dimension = agent.pedestrian.bounding_box.extent
                                     orientation = agent.pedestrian.transform.rotation
