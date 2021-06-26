@@ -52,7 +52,7 @@ model = get_model(config)
 PLAYER_START_INDEX     = 150     #  spawn index for player
 DESTINATION_INDEX      = 12     # Setting a Destination HERE
 NUM_PEDESTRIANS        = 2000     # total number of pedestrians to spawn
-NUM_VEHICLES           = 0     # total number of vehicles to spawn
+NUM_VEHICLES           = 500     # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -117,7 +117,7 @@ DIST_THRESHOLD_TO_LAST_WAYPOINT = 2.0  # some distance from last position before
                                        # simulation ends
 
 # Planning Constants
-NUM_PATHS = 7
+NUM_PATHS = 11
 BP_LOOKAHEAD_BASE      = 16.0              # m #A 20 SI ROMPONO LE CURVE
 BP_LOOKAHEAD_TIME      = 1.0              # s
 PATH_OFFSET            = 1.5              # m
@@ -949,6 +949,7 @@ def exec_waypoint_nav_demo(args):
                                         speed = agent.vehicle.forward_speed
                                         if speed >=-1 and speed<=2.5:
                                             obstacles.append(obstacle_to_world(location, dimension, orientation))
+                                            obstacles_type.append('vehicle')
                                         if agent_vehicle_distance <= 20:
                                             if(bp.check_for_lead_vehicle2(ego_state,[location.x,location.y])): #se il veicolo è davanti a noi
                                                 if (agent_vehicle_distance < min_distance):

@@ -11,7 +11,7 @@ class CollisionChecker:
 
     # Takes in a set of paths and obstacles, and returns an array
     # of bools that says whether or not each path is collision free.
-    def collision_check(self, paths, obstacles,obstacles_type):
+    def collision_check(self, paths, obstacles, obstacles_type):
         """Returns a bool array on whether each path is collision free.
 
         args:
@@ -83,7 +83,8 @@ class CollisionChecker:
                                                   self._circle_radii)
                     collision_free = collision_free and \
                                      not np.any(collision_dists < 0)
-                    if(obstacles_type[k] == 'pedestrian' and collision_free == False and i <len(paths)-2 and i > 2 ):
+                    
+                    if(obstacles_type[k] == 'pedestrian' and collision_free == False and i <len(paths)-3 and i > 3 ):
                         stopped_at_pedestrian = True
 
                     if not collision_free:
@@ -93,7 +94,7 @@ class CollisionChecker:
 
             collision_check_array[i] = collision_free
         ###########################################################################
-        ######################### GESTIONE OFF ROAD################################
+        ######################### GESTIONE OFF ROAD/PEDESTRIAN ################################
         ###########################################################################
         count=0
         count2=0
