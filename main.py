@@ -999,7 +999,7 @@ def exec_waypoint_nav_demo(args):
                 paths = local_planner.transform_paths(paths, ego_state)
 
                 # Perform collision checking.
-                collision_check_array,stop_flag = lp._collision_checker.collision_check(paths,obstacles,obstacles_type)
+                collision_check_array,stop_flag = lp._collision_checker.collision_check(paths,obstacles,obstacles_type,bp._follow_lead_vehicle)
                 #check_obstacle_state(bp,stop_flag)
                 check_state(bp, traffic_light, stop_flag)
 

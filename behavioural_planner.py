@@ -285,6 +285,7 @@ class BehaviouralPlanner:
                    ego_heading_vector) < (1 / math.sqrt(2)):
             #print('LA MACCHINA SI TROVA DIETRO')
             return False
+         print('SONO IN LEAD VEHICLE')
          return True
 
 # Compute the waypoint index that is closest to the ego vehicle, and return
