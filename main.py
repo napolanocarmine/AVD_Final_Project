@@ -49,10 +49,10 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 150     #  spawn index for player
-DESTINATION_INDEX      = 12     # Setting a Destination HERE
-NUM_PEDESTRIANS        = 2000     # total number of pedestrians to spawn
-NUM_VEHICLES           = 500     # total number of vehicles to spawn
+PLAYER_START_INDEX     = 105     #  spawn index for player
+DESTINATION_INDEX      = 134     # Setting a Destination HERE
+NUM_PEDESTRIANS        = 650     # total number of pedestrians to spawn
+NUM_VEHICLES           = 350     # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -964,7 +964,7 @@ def exec_waypoint_nav_demo(args):
                             elif agent.HasField('pedestrian'):
                                 location = agent.pedestrian.transform.location
                                 agent_pedestrian_distance= np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2)
-                                if agent_pedestrian_distance <= COLLISION_RADIUS:
+                                if agent_pedestrian_distance <= BP_LOOKAHEAD_BASE-6:
                                     #print("pedone nei paraggi")
                                     dimension = agent.pedestrian.bounding_box.extent
                                     orientation = agent.pedestrian.transform.rotation
