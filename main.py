@@ -49,10 +49,10 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 105     #  spawn index for player
-DESTINATION_INDEX      = 134     # Setting a Destination HERE
-NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
-NUM_VEHICLES           = 500     # total number of vehicles to spawn
+PLAYER_START_INDEX     = 2     #  spawn index for player
+DESTINATION_INDEX      = 23     # Setting a Destination HERE
+NUM_PEDESTRIANS        = 1     # total number of pedestrians to spawn
+NUM_VEHICLES           = 1     # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -83,7 +83,7 @@ COLLISION_RADIUS = 30
 ###############################################################################
 # ACTIVE OR DISACTIVE EVERY SINGLE FUNCTIONS OF OUR PROJECT
 ###############################################################################
-TRACK_TRAFFIC_LIGHT = False
+TRACK_TRAFFIC_LIGHT = True
 FOLLOW_LEAD_VEHICLE = True
 OBSTACLE_AVOIDANCE =  True
 
