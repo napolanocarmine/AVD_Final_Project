@@ -235,7 +235,7 @@ class BehaviouralPlanner:
             # vehicle lies within +/- 45 degrees of the ego vehicle's heading.
             if np.dot(lead_car_delta_vector, 
                       ego_heading_vector) < (1 / math.sqrt(2)):
-                print('LA MACCHINA SI TROVA DIETRO')
+                print('LA MACCHINA SI TROVA DIETROO')
                 return
 
             self._follow_lead_vehicle = True
