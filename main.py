@@ -49,10 +49,10 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 108     #  spawn index for player
+PLAYER_START_INDEX     = 112     #  spawn index for player
 DESTINATION_INDEX      = 12     # Setting a Destination HERE
-NUM_PEDESTRIANS        = 1     # total number of pedestrians to spawn
-NUM_VEHICLES           = 10000     # total number of vehicles to spawn
+NUM_PEDESTRIANS        = 500     # total number of pedestrians to spawn
+NUM_VEHICLES           = 500     # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################
@@ -83,7 +83,7 @@ COLLISION_RADIUS = 30
 ###############################################################################
 # ACTIVE OR DISACTIVE EVERY SINGLE FUNCTIONS OF OUR PROJECT
 ###############################################################################
-TRACK_TRAFFIC_LIGHT = False
+TRACK_TRAFFIC_LIGHT = True
 FOLLOW_LEAD_VEHICLE = True
 OBSTACLE_AVOIDANCE =  True
 
@@ -940,12 +940,12 @@ def exec_waypoint_nav_demo(args):
                                 if agent_vehicle_distance <= COLLISION_RADIUS:
                                     dimension = agent.vehicle.bounding_box.extent
                                     orientation = agent.vehicle.transform.rotation
+                                    speed = agent.vehicle.forward_speed
 
                                     yaw = agent.vehicle.transform.rotation.yaw
                                     new_ego_state= (ego_state[2]*180)/pi
 
                                     if(abs(yaw-new_ego_state)<=40):
-                                        speed = agent.vehicle.forward_speed
                                         # if speed >=-1 and speed<=2.5:
                                         #     obstacles.append(obstacle_to_world(location, dimension, orientation))
                                         #     obstacles_type.append('vehicle')
@@ -956,9 +956,10 @@ def exec_waypoint_nav_demo(args):
                                                     lead_car_pos =[[location.x,location.y]]
                                                     lead_car_length = [dimension.x]
                                                     lead_car_speed = [speed]
-                                    elif abs(yaw-new_ego_state)<=150:
-                                        obstacles.append(obstacle_to_world(location, dimension, orientation))
-                                        obstacles_type.append('vehicle_moving')
+                                    elif agent_vehicle_distance <= 13 and abs(yaw-new_ego_state)<=130 and speed !=0:
+                                         print('Lo ho messo in culo')
+                                         obstacles.append(obstacle_to_world(location, dimension, orientation))
+                                         obstacles_type.append('vehicle_moving')
                                     else:
                                         obstacles.append(obstacle_to_world(location, dimension, orientation))
                                         obstacles_type.append('vehicle')
@@ -1007,6 +1008,8 @@ def exec_waypoint_nav_demo(args):
                 # If no path was feasible, continue to follow the previous best path.
                 if best_index == None:
                     best_path = lp._prev_best_path
+                    best_path = [lp._prev_best_path[0][:3], lp._prev_best_path[1][:3],
+                                 lp._prev_best_path[2][:3]]
 
                 else:
                     best_path = paths[best_index]

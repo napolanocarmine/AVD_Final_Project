@@ -86,7 +86,9 @@ class CollisionChecker:
                     
                     if(obstacles_type[k] == 'pedestrian' and collision_free == False and i <len(paths)-5 and i > 3 ):
                         stopped_at_pedestrian = True
-                    elif obstacles_type[k] == 'vehicle_moving' and collision_free == False and i <len(paths)-2 and i > 2 :
+
+                    elif obstacles_type[k] == 'vehicle_moving' and i <len(paths)-1 and i > 1 :
+                        print('###### MI STO STOPPANDO PER UN VEICOLO DI MERDA #######')
                         stopped_at_pedestrian = True
 
                     if not collision_free:
@@ -105,7 +107,7 @@ class CollisionChecker:
                 count2 += 1
         else:
             for temp in collision_check_array:
-                if (count> len(collision_check_array)-2 and temp == True or (count < 2 and temp == True)):
+                if (count> len(collision_check_array)-1 and temp == True or (count < 1 and temp == True)):
                 #if (count> len(collision_check_array)-5 and temp == True or (count < 5 and temp == True)):
                     collision_check_array_without_off_road[count]=False
                 else:
