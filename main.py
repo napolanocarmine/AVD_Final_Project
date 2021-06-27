@@ -68,8 +68,8 @@ CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
 ###############################################################################
 # CONFIGURABLE PARAMENTERS OF TRAFFIC LIGHT MANAGEMENT
 ###############################################################################
-MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 5
-MAX_DISTANCE_FROM_TRAFFIC_LIGHT = 10
+MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 6  # ORIGINAL = 5
+MAX_DISTANCE_FROM_TRAFFIC_LIGHT = 11 # ORIGINAL = 10
 SHORT_DISTANCE_COUNTER_THRESHOLD = 2
 SAME_DISTANCE_COUNTER_THRESHOLD = 2
 STAY_STOPPED_AT_TRAFFIC_LIGHT_DESIRED_SPEED = 0
