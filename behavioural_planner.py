@@ -359,6 +359,6 @@ def check_state(self, traffic_light,stop_flag):
 
         elif (self._traffic_flag == True and self._traffic_light_state == 'go' and traffic_light[0][1] >= 0.25):
             self._green_count += 1
-    else:
+  
         if self._state != STAY_STOPPED_AT_TRAFFIC_LIGHT and self._state != DECELERATE_TO_TRAFFIC_LIGHT:
             self._state = FOLLOW_LANE

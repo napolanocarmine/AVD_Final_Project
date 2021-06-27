@@ -84,9 +84,9 @@ class CollisionChecker:
                     collision_free = collision_free and \
                                      not np.any(collision_dists < 0)
                     
-                    if(obstacles_type[k] == 'pedestrian' and collision_free == False and i <len(paths)-5 and i > 3 ):
+                    if(obstacles_type[k] == 'pedestrian' and collision_free == False and i <len(paths)-5 and i > 2 ):
                         stopped_at_pedestrian = True
-                    elif obstacles_type[k] == 'vehicle_moving' and collision_free == False and i <len(paths)-2 and i > 2 :
+                    elif obstacles_type[k] == 'vehicle_moving' and i <len(paths)-1 and i > 1 :
                         stopped_at_pedestrian = True
 
                     if not collision_free:

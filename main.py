@@ -49,11 +49,11 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 108     #  spawn index for player
+PLAYER_START_INDEX     = 150    #  spawn index for player
 DESTINATION_INDEX      = 12     # Setting a Destination HERE
-NUM_PEDESTRIANS        = 1     # total number of pedestrians to spawn
-NUM_VEHICLES           = 10000     # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
+NUM_PEDESTRIANS        = 500    # total number of pedestrians to spawn
+NUM_VEHICLES           = 500     # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################
 
@@ -66,7 +66,7 @@ CLIENT_WAIT_TIME       = 3      # wait time for client before starting episode
                                 # consistently
 
 ###############################################################################
-# CONFIGURABLE PARAMENTERS OF TRAFFIC LIGHT MANAGEMENT
+# CONFIGURABLE PARAMETERS OF TRAFFIC LIGHT MANAGEMENT
 ###############################################################################
 MIN_DISTANCE_FROM_TRAFFIC_LIGHT = 6  # ORIGINAL = 5
 MAX_DISTANCE_FROM_TRAFFIC_LIGHT = 11 # ORIGINAL = 10
@@ -76,14 +76,18 @@ STAY_STOPPED_AT_TRAFFIC_LIGHT_DESIRED_SPEED = 0
 INDEX_CUT_PATH = 3
 
 ###############################################################################
-# CONFIGURABLE PARAMENTERS OF COLLISION OBJECTS AND LEAD VEHICLES
+# CONFIGURABLE PARAMETERS OF COLLISION OBJECTS AND LEAD VEHICLES
 ###############################################################################
 COLLISION_RADIUS = 30
+YAW_DIFFERENCE_FOR_LEAD_VEHICLES = 40
+YAW_DIFFERENCE_FOR_VEHICLES_MOVING = 150
+COLLISION_RADIUS_FOR_PEDESTRIAN = 11.8
+COLLISION_RADIUS_FOR_VEHICLES_MOVING = 20
 
 ###############################################################################
 # ACTIVE OR DISACTIVE EVERY SINGLE FUNCTIONS OF OUR PROJECT
 ###############################################################################
-TRACK_TRAFFIC_LIGHT = False
+TRACK_TRAFFIC_LIGHT = True
 FOLLOW_LEAD_VEHICLE = True
 OBSTACLE_AVOIDANCE =  True
 
@@ -117,8 +121,8 @@ DIST_THRESHOLD_TO_LAST_WAYPOINT = 2.0  # some distance from last position before
                                        # simulation ends
 
 # Planning Constants
-NUM_PATHS = 11                             # ORIGINAL = 7
-BP_LOOKAHEAD_BASE      = 16.0              # DO NOT CHANGE
+NUM_PATHS               = 11              # ORIGINAL = 7
+BP_LOOKAHEAD_BASE      = 16.0             # DO NOT CHANGE
 BP_LOOKAHEAD_TIME      = 0.5              # s
 PATH_OFFSET            = 1                # m ORIGINAL = 1.5
 CIRCLE_OFFSETS         = [-1.0, 1.0, 3.0] # m
@@ -940,12 +944,12 @@ def exec_waypoint_nav_demo(args):
                                 if agent_vehicle_distance <= COLLISION_RADIUS:
                                     dimension = agent.vehicle.bounding_box.extent
                                     orientation = agent.vehicle.transform.rotation
+                                    speed = agent.vehicle.forward_speed
 
                                     yaw = agent.vehicle.transform.rotation.yaw
                                     new_ego_state= (ego_state[2]*180)/pi
 
-                                    if(abs(yaw-new_ego_state)<=40):
-                                        speed = agent.vehicle.forward_speed
+                                    if(abs(yaw-new_ego_state)<=YAW_DIFFERENCE_FOR_LEAD_VEHICLES):
                                         # if speed >=-1 and speed<=2.5:
                                         #     obstacles.append(obstacle_to_world(location, dimension, orientation))
                                         #     obstacles_type.append('vehicle')
@@ -956,7 +960,9 @@ def exec_waypoint_nav_demo(args):
                                                     lead_car_pos =[[location.x,location.y]]
                                                     lead_car_length = [dimension.x]
                                                     lead_car_speed = [speed]
-                                    elif abs(yaw-new_ego_state)<=150:
+                                    elif agent_vehicle_distance <= COLLISION_RADIUS_FOR_VEHICLES_MOVING \
+                                        and abs(yaw-new_ego_state)<=YAW_DIFFERENCE_FOR_VEHICLES_MOVING \
+                                        and speed!= 0:
                                         obstacles.append(obstacle_to_world(location, dimension, orientation))
                                         obstacles_type.append('vehicle_moving')
                                     else:
