@@ -70,10 +70,10 @@ class BehaviouralPlanner:
             self._state: The current state of the vehicle.
                 available states: 
                     FOLLOW_LANE         : Follow the global waypoints (lane).
-                    DECELERATE_TO_STOP  : Decelerate to stop.
-                    STAY_STOPPED        : Stay stopped.
+                    DECELERATE_TO_TRAFFIC_LIGHT  : Decelerate to stop.
+                    STAY_STOPPED_AT_TRAFFIC_LIGHT        : Stay stopped.
             self._stop_count: Counter used to count the number of cycles which
-                the vehicle was in the STAY_STOPPED state so far.
+                the vehicle was in the STAY_STOPPED_AT_TRAFFIC_LIGHT state so far.
         useful_constants:
             STOP_THRESHOLD  : Stop speed threshold (m). The vehicle should fully
                               stop when its speed falls within this threshold.
@@ -109,7 +109,7 @@ class BehaviouralPlanner:
         # stop, and compare to STOP_THRESHOLD.  If so, transition to the next
         # state.
         elif self._state == DECELERATE_TO_STOP:
-            #print("DECELERATE_TO_STOP")
+            #print("DECELERATE_TO_TRAFFIC_LIGHT")
             if abs(closed_loop_speed) <= STOP_THRESHOLD:
                 self._state = STAY_STOPPED
                 self._stop_count = 0
@@ -118,7 +118,7 @@ class BehaviouralPlanner:
         # least STOP_COUNTS number of cycles. If so, we can now leave
         # the stop sign and transition to the next state.
         elif self._state == STAY_STOPPED:
-            #print("STAY_STOPPED")
+            #print("STAY_STOPPED_AT_TRAFFIC_LIGHT")
             # We have stayed stopped for the required number of cycles.
             # Allow the ego vehicle to leave the stop sign. Once it has
             # passed the stop sign, return to lane following.
@@ -330,8 +330,8 @@ def pointOnSegment(p1, p2, p3):
     """
     # State machine states
     FOLLOW_LANE = 0
-    DECELERATE_TO_STOP = 1
-    STAY_STOPPED = 2
+    DECELERATE_TO_TRAFFIC_LIGHT = 1
+    STAY_STOPPED_AT_TRAFFIC_LIGHT = 2
     """
 
 def check_traffic_light_state(self, traffic_light, current_speed):
@@ -359,7 +359,7 @@ def check_traffic_light_state(self, traffic_light, current_speed):
                 if (current_speed <= 1):
                     print('##############################################################CURRENT SPEED: ' + str(current_speed))
                     print('STAY STOPPED')
-                    self._state = STAY_STOPPED
+                    self._state = STAY_STOPPED_AT_TRAFFIC_LIGHT
                 """
 
         elif (self._traffic_flag == True and self._traffic_light_state == 'go' and traffic_light[0][1] >= 0.25):

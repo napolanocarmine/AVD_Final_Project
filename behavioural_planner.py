@@ -4,8 +4,8 @@ import math
 
 # State machine states
 FOLLOW_LANE = 0
-DECELERATE_TO_STOP = 1
-STAY_STOPPED = 2
+DECELERATE_TO_TRAFFIC_LIGHT = 1
+STAY_STOPPED_AT_TRAFFIC_LIGHT = 2
 STOP_AT_OBSTACLE = 3
 # Stop speed threshold
 STOP_THRESHOLD = 1
@@ -65,10 +65,11 @@ class BehaviouralPlanner:
             self._state: The current state of the vehicle.
                 available states: 
                     FOLLOW_LANE         : Follow the global waypoints (lane).
-                    DECELERATE_TO_STOP  : Decelerate to stop.
-                    STAY_STOPPED        : Stay stopped.
+                    DECELERATE_TO_TRAFFIC_LIGHT  : Decelerate to stop at red traffic light.
+                    STAY_STOPPED_AT_TRAFFIC_LIGHT        : Stay stopped at red traffic light.
+                    STOP_AT_OBSTACLE            : Stop in front of a pedestrian
             self._stop_count: Counter used to count the number of cycles which
-                the vehicle was in the STAY_STOPPED state so far.
+                the vehicle was in the STAY_STOPPED_AT_TRAFFIC_LIGHT state so far.
         useful_constants:
             STOP_THRESHOLD  : Stop speed threshold (m). The vehicle should fully
                               stop when its speed falls within this threshold.
@@ -86,7 +87,7 @@ class BehaviouralPlanner:
         # complete, and examine the check_for_stop_signs() function to
         # understand it.
         if self._state == FOLLOW_LANE :
-            print('SONO IN FOLLOW LANE')
+            print('SONO IN FOLLOW_LANE')
             # First, find the closest index to the ego vehicle.
             closest_len, closest_index = get_closest_index(waypoints, ego_state)
 
@@ -103,10 +104,10 @@ class BehaviouralPlanner:
         # closed loop speed to do so, to ensure we are actually at a complete
         # stop, and compare to STOP_THRESHOLD.  If so, transition to the next
         # state.
-        elif self._state == DECELERATE_TO_STOP:
-            print('SONO IN DECELERATE TO STOP')
+        elif self._state == DECELERATE_TO_TRAFFIC_LIGHT:
+            print('SONO IN DECELERATE_TO_TRAFFIC_LIGHT')
             if abs(closed_loop_speed) <= STOP_THRESHOLD:
-                self._state = STAY_STOPPED
+                self._state = STAY_STOPPED_AT_TRAFFIC_LIGHT
                 self._stop_count = 0
             elif (self._green_count > 10  and self._traffic_light_state == 'go') or self._red_count==0:
                 self._state = FOLLOW_LANE
@@ -118,29 +119,20 @@ class BehaviouralPlanner:
         # In this state, check to see if we have stayed stopped for at
         # least STOP_COUNTS number of cycles. If so, we can now leave
         # the stop sign and transition to the next state.
-        elif self._state == STAY_STOPPED:
-            print('SONO IN STAY STOPPED')
-            """
-            closest_len, closest_index = get_closest_index(waypoints, ego_state)
-            goal_index = self.get_goal_index(waypoints, ego_state, closest_len, closest_index)
-            #while waypoints[goal_index][2] <= 0.1: goal_index += 1
-            waypoints[goal_index][2] = 0
-            """         
+        elif self._state == STAY_STOPPED_AT_TRAFFIC_LIGHT:
+            print('SONO IN STAY_STOPPED_AT_TRAFFIC_LIGHT')
 
-            """
-            self._goal_index = goal_index
-            self._goal_state = waypoints[goal_index]
-            """
-
-            if ((self._green_count > 10  and self._traffic_light_state == 'go') or self._red_count==0 and (self._state == DECELERATE_TO_STOP or self._state == STAY_STOPPED)):
+            if ((self._green_count > 10  and self._traffic_light_state == 'go') or self._red_count==0 and
+                    (self._state == DECELERATE_TO_TRAFFIC_LIGHT or self._state == STAY_STOPPED_AT_TRAFFIC_LIGHT)):
                 self._state = FOLLOW_LANE
                 self._red_count = 0
                 self._green_count = 0
                 self._traffic_flag = False
 
-            #self._state = FOLLOW_LANE
+
         elif self._state == STOP_AT_OBSTACLE:
-            print('SONO IN STOP AT OBSTACLE')
+            print('SONO IN STOP_AT_OBSTACLE')
+
         else:
             raise ValueError('Invalid state value.')
 
@@ -285,7 +277,7 @@ class BehaviouralPlanner:
                    ego_heading_vector) < (1 / math.sqrt(2)):
             #print('LA MACCHINA SI TROVA DIETRO')
             return False
-         print('SONO IN LEAD VEHICLE')
+         print('SONO IN FOLLOW_LEAD_VEHICLE')
          return True
 
 # Compute the waypoint index that is closest to the ego vehicle, and return
@@ -339,48 +331,11 @@ def pointOnSegment(p1, p2, p3):
     else:
         return False
 
-    """
-    # State machine states
-    FOLLOW_LANE = 0
-    DECELERATE_TO_STOP = 1
-    STAY_STOPPED = 2
-    """
-
-def check_traffic_light_state(self, traffic_light, current_speed):
-    
-    self._count +=1
-    
-    if self._red_count >0 and self._count > 15:
-        self._count = 0 
-        self._red_count = 0
-
-    if (len(traffic_light) != 0):
-        #print(traffic_light)
-
-        self._traffic_light_state=traffic_light[0][0]
-
-        if (self._traffic_light_state == 'stop' and traffic_light[0][1] >= 0.20):
-            self._red_count += 1
-            self._count = 0 
-
-            if (self._red_count > 2 and self._state != STAY_STOPPED):
-                print('DECELERATE TO STOP')
-                self._traffic_flag = True
-
-                self._state = DECELERATE_TO_STOP
-
-        elif (self._traffic_flag == True and self._traffic_light_state == 'go' and traffic_light[0][1] >= 0.25):
-            self._green_count += 1
-
-def check_obstacle_state(self,stop_flag):
-    if(stop_flag == True):
-        self._state = STOP_AT_OBSTACLE
-    else:
-        self._state = FOLLOW_LANE
 
 
 def check_state(self, traffic_light,stop_flag):
-    self._count += 1
+    if(len(traffic_light) == 0 or traffic_light[0][0] == 'go'):
+        self._count += 1
 
     if self._red_count > 0 and self._count > 15:
         self._count = 0
@@ -397,14 +352,13 @@ def check_state(self, traffic_light,stop_flag):
             self._red_count += 1
             self._count = 0
 
-            if (self._red_count > 2 and self._state != STAY_STOPPED):
-                print('DECELERATE TO STOP')
+            if (self._red_count > 2 and self._state != STAY_STOPPED_AT_TRAFFIC_LIGHT):
+                print('DECELERATE_TO_TRAFFIC_LIGHT')
                 self._traffic_flag = True
-
-                self._state = DECELERATE_TO_STOP
+                self._state = DECELERATE_TO_TRAFFIC_LIGHT
 
         elif (self._traffic_flag == True and self._traffic_light_state == 'go' and traffic_light[0][1] >= 0.25):
             self._green_count += 1
     else:
-        if self._state != STAY_STOPPED and self._state != DECELERATE_TO_STOP:
+        if self._state != STAY_STOPPED_AT_TRAFFIC_LIGHT and self._state != DECELERATE_TO_TRAFFIC_LIGHT:
             self._state = FOLLOW_LANE

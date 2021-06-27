@@ -35,7 +35,7 @@ from carla.planner.city_track import CityTrack
 import carla.image_converter as image_converter
 from traffic_light_detection_module.detect_carla_images import *
 from traffic_light_detection_module.predict import *
-from behavioural_planner import DECELERATE_TO_STOP, STAY_STOPPED, check_traffic_light_state,check_obstacle_state,check_state
+from behavioural_planner import DECELERATE_TO_TRAFFIC_LIGHT, STAY_STOPPED_AT_TRAFFIC_LIGHT, check_traffic_light_state,check_obstacle_state,check_state
 
 
 ###############################################################################
@@ -49,10 +49,10 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 2     #  spawn index for player
-DESTINATION_INDEX      = 23     # Setting a Destination HERE
+PLAYER_START_INDEX     = 108     #  spawn index for player
+DESTINATION_INDEX      = 12     # Setting a Destination HERE
 NUM_PEDESTRIANS        = 1     # total number of pedestrians to spawn
-NUM_VEHICLES           = 1     # total number of vehicles to spawn
+NUM_VEHICLES           = 10000     # total number of vehicles to spawn
 SEED_PEDESTRIANS       = 0      # seed for pedestrian spawn randomizer
 SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
 ###############################################################################àà
@@ -566,6 +566,7 @@ def exec_waypoint_nav_demo(args):
         # Put waypoints in the lane
         previuos_waypoint = mission_planner._map.convert_to_world(waypoints_route[0])
         for i in range(1, len(waypoints_route)):
+            intersection_flag = False
             point = waypoints_route[i]
 
             waypoint = mission_planner._map.convert_to_world(point)
@@ -582,6 +583,7 @@ def exec_waypoint_nav_demo(args):
             prev_y = abs(dy) > 0.1
 
             if point in intersection_nodes:
+                intersection_flag = True
                 prev_start_intersection = mission_planner._map.convert_to_world(waypoints_route[i - 2])
                 center_intersection = mission_planner._map.convert_to_world(waypoints_route[i])
 
@@ -948,9 +950,9 @@ def exec_waypoint_nav_demo(args):
 
                                     if(abs(yaw-new_ego_state)<=40):
                                         speed = agent.vehicle.forward_speed
-                                        if speed >=-1 and speed<=2.5:
-                                            obstacles.append(obstacle_to_world(location, dimension, orientation))
-                                            obstacles_type.append('vehicle')
+                                        # if speed >=-1 and speed<=2.5:
+                                        #     obstacles.append(obstacle_to_world(location, dimension, orientation))
+                                        #     obstacles_type.append('vehicle')
                                         if agent_vehicle_distance <= 20:
                                             if(bp.check_for_lead_vehicle2(ego_state,[location.x,location.y])): #se il veicolo è davanti a noi
                                                 if (agent_vehicle_distance < min_distance):
@@ -1017,13 +1019,13 @@ def exec_waypoint_nav_demo(args):
                 if best_path is not None:
                     # Compute the velocity profile for the path, and compute the waypoints.
                     desired_speed = bp._goal_state[2]
-                    #decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_STOP
-                    decelerate_to_stop = ( bp._state == behavioural_planner.DECELERATE_TO_STOP or
-                                           bp._state == behavioural_planner.STOP_AT_OBSTACLE )
+                    #decelerate_to_stop = bp._state == behavioural_planner.DECELERATE_TO_TRAFFIC_LIGHT
+                    decelerate_to_stop = (bp._state == behavioural_planner.DECELERATE_TO_TRAFFIC_LIGHT or
+                                          bp._state == behavioural_planner.STOP_AT_OBSTACLE)
 
                     if(bp._traffic_flag == True):
 
-                        if bp._state == behavioural_planner.STAY_STOPPED:
+                        if bp._state == behavioural_planner.STAY_STOPPED_AT_TRAFFIC_LIGHT:
                             desired_speed = STAY_STOPPED_DESIRED_SPEED
 
                         if prev_distance_traffic > distance_from_traffic_light:
@@ -1039,7 +1041,7 @@ def exec_waypoint_nav_demo(args):
                             counter_short_distance += 1
                             best_path = lp._prev_best_path
                             if counter_short_distance >= SHORT_DISTANCE_COUNTER_THRESHOLD:
-                                if bp._state == behavioural_planner.STAY_STOPPED:
+                                if bp._state == behavioural_planner.STAY_STOPPED_AT_TRAFFIC_LIGHT:
                                     counter_short_distance = 0
                                 #best_path = [lp._prev_best_path[0][:INDEX_CUT_PATH],lp._prev_best_path[1][:INDEX_CUT_PATH],lp._prev_best_path[2][:INDEX_CUT_PATH]]
                                 for i in range(0, len(best_path[2])):
