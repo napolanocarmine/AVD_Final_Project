@@ -260,7 +260,7 @@ class BehaviouralPlanner:
             self._follow_lead_vehicle = False
 
 
-    def check_for_lead_vehicle2(self, ego_state, lead_car_position):
+    def check_for_lead_vehicle_custom(self, ego_state, lead_car_position):
          # Compute the angle between the normalized vector between the lead vehicle
          # and ego vehicle position with the ego vehicle's heading vector.
          lead_car_delta_vector = [lead_car_position[0] - ego_state[0],

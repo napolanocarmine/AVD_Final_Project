@@ -114,13 +114,11 @@ class VelocityPlanner:
         start_speed = ego_state[3]
         # Generate a trapezoidal profile to decelerate to stop.
         if decelerate_to_stop:
-            #print('ENTRO IN DECELERAE TO STOP NEL VELOCITY PLANNER')
             profile = self.decelerate_profile(path, start_speed)
 
         # If we need to follow the lead vehicle, make sure we decelerate to its
         # speed by the time we reach the time gap point.
         elif lead_car_state is not None and follow_lead_vehicle:
-            #print('SONO ENTRATO')
             profile = self.follow_profile(path, start_speed, desired_speed, 
                                           lead_car_state)
 
@@ -208,11 +206,9 @@ class VelocityPlanner:
         # perform a smooth deceleration and require a harder deceleration. Build
         # the path up in reverse to ensure we reach zero speed at the required
         # time.
-        #print('PATH LENGHT: ' +str(path_length))
-        #print('SOMMA ' + str(brake_distance + decel_distance + stop_line_buffer))
         if brake_distance + decel_distance + stop_line_buffer > path_length:
             print('###################################################')
-            print('SONO ENTRATO NELLIF DI FRENATA BRUSCA')
+            print('SONO ENTRATO IN FRENATA BRUSCA')
             print('###################################################')
             speeds = []
             vf = 0.0
@@ -244,7 +240,7 @@ class VelocityPlanner:
         # endpoints of the ramps in our trapezoidal profile.
         else:
             print('###################################################')
-            print('SONO ENTRATO NELLIF DI FRENATA NORMALE')
+            print('SONO ENTRATO IN FRENATA NORMALE')
             print('###################################################')
             brake_index = stop_index 
             temp_dist = 0.0
@@ -395,7 +391,6 @@ class VelocityPlanner:
 
     # Computes a profile for nominal speed tracking.
     def nominal_profile(self, path, start_speed, desired_speed):
-        #print("normal:", desired_speed)
         """Computes the velocity profile for the local planner path in a normal
         speed tracking case.
         
