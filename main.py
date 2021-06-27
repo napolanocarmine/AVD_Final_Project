@@ -83,7 +83,7 @@ COLLISION_RADIUS = 30
 ###############################################################################
 # ACTIVE OR DISACTIVE EVERY SINGLE FUNCTIONS OF OUR PROJECT
 ###############################################################################
-TRACK_TRAFFIC_LIGHT = True
+TRACK_TRAFFIC_LIGHT = False
 FOLLOW_LEAD_VEHICLE = True
 OBSTACLE_AVOIDANCE =  True
 
@@ -956,6 +956,9 @@ def exec_waypoint_nav_demo(args):
                                                     lead_car_pos =[[location.x,location.y]]
                                                     lead_car_length = [dimension.x]
                                                     lead_car_speed = [speed]
+                                    elif abs(yaw-new_ego_state)<=150:
+                                        obstacles.append(obstacle_to_world(location, dimension, orientation))
+                                        obstacles_type.append('vehicle_moving')
                                     else:
                                         obstacles.append(obstacle_to_world(location, dimension, orientation))
                                         obstacles_type.append('vehicle')

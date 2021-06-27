@@ -86,6 +86,8 @@ class CollisionChecker:
                     
                     if(obstacles_type[k] == 'pedestrian' and collision_free == False and i <len(paths)-5 and i > 3 ):
                         stopped_at_pedestrian = True
+                    elif obstacles_type[k] == 'vehicle_moving' and collision_free == False and i <len(paths)-2 and i > 2 :
+                        stopped_at_pedestrian = True
 
                     if not collision_free:
                         break
