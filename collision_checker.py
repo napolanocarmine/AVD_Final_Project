@@ -38,7 +38,7 @@ class CollisionChecker:
                 ith path in the paths list.
         """
         collision_check_array = np.zeros(len(paths), dtype=bool)
-        stopped_at_pedestrian = False
+        stopped_at_obstacle = False
         for i in range(len(paths)):
             collision_free = True
             path           = paths[i]
@@ -85,9 +85,10 @@ class CollisionChecker:
                                      not np.any(collision_dists < 0)
                     
                     if(obstacles_type[k] == 'pedestrian' and collision_free == False and i <len(paths)-5 and i > 2 ):
-                        stopped_at_pedestrian = True
+                        stopped_at_obstacle = True
                     elif obstacles_type[k] == 'vehicle_moving' and i <len(paths)-1 and i > 1 :
-                        stopped_at_pedestrian = True
+                        print('### SONO ENTRATO IN STOP PER UN VEHICLE MOVING ###')
+                        stopped_at_obstacle = True
 
                     if not collision_free:
                         break
@@ -99,7 +100,7 @@ class CollisionChecker:
         count=0
         count2=0
         collision_check_array_without_off_road=np.zeros(len(paths), dtype=bool)
-        if(stopped_at_pedestrian == True or follow_lead_vehicle == True):
+        if(stopped_at_obstacle == True or follow_lead_vehicle == True):
             for temp in collision_check_array:
                 collision_check_array_without_off_road[count2] = False
                 count2 += 1
@@ -112,7 +113,7 @@ class CollisionChecker:
                     collision_check_array_without_off_road[count]=temp
                 count+=1
 
-        return collision_check_array_without_off_road,stopped_at_pedestrian
+        return collision_check_array_without_off_road, stopped_at_obstacle
 
     # Selects the best path in the path set, according to how closely
     # it follows the lane centerline, and how far away it is from other
