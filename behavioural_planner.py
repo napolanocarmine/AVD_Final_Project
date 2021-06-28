@@ -35,7 +35,8 @@ class BehaviouralPlanner:
 
     # Handles state transitions and computes the goal state.
     def transition_state(self, waypoints, ego_state, closed_loop_speed):
-        """Handles state transitions and computes the goal state.  
+        """Handles some of state transitions and computes the goal state.
+            You can read a better explanation in the PDF at Behavioral Planner section
         
         args:
             waypoints: current waypoints to track (global frame). 
@@ -64,17 +65,16 @@ class BehaviouralPlanner:
                 format: [x_goal, y_goal, v_goal]
             self._state: The current state of the vehicle.
                 available states: 
-                    FOLLOW_LANE         : Follow the global waypoints (lane).
-                    DECELERATE_TO_TRAFFIC_LIGHT  : Decelerate to stop at red traffic light.
-                    STAY_STOPPED_AT_TRAFFIC_LIGHT        : Stay stopped at red traffic light.
-                    STOP_AT_OBSTACLE            : Stop in front of a pedestrian
-            self._stop_count: Counter used to count the number of cycles which
-                the vehicle was in the STAY_STOPPED_AT_TRAFFIC_LIGHT state so far.
+                    FOLLOW_LANE                     : Follow the global waypoints (lane).
+                    DECELERATE_TO_TRAFFIC_LIGHT     : Decelerate to stop at red traffic light.
+                    STAY_STOPPED_AT_TRAFFIC_LIGHT   : Stay stopped at red traffic light.
+                    STOP_AT_OBSTACLE                : Stop in front of a pedestrian
+            self._red_count: Number of red traffic light detected
+            self._green_count:  Number of green traffic light detected
+            self._traffic_flag: Flag that says the traffic light it's RED 
         useful_constants:
-            STOP_THRESHOLD  : Stop speed threshold (m). The vehicle should fully
-                              stop when its speed falls within this threshold.
-            STOP_COUNTS     : Number of cycles (simulation iterations) 
-                              before moving from stop sign.
+            STOP_THRESHOLD  : Speed threshold to change the state from DECELERATE_TO_TRAFFIC_LIGHT
+                              to STAY_STOPPED_AT_TRAFFIC_LIGHT 
         """
         # In this state, continue tracking the lane by finding the
         # goal index in the waypoint list that is within the lookahead
@@ -84,8 +84,8 @@ class BehaviouralPlanner:
         # You should use the get_closest_index(), get_goal_index(), and
         # check_for_stop_signs() helper functions.
         # Make sure that get_closest_index() and get_goal_index() functions are
-        # complete, and examine the check_for_stop_signs() function to
-        # understand it.
+        # complete.
+
         if self._state == FOLLOW_LANE :
             print('SONO IN FOLLOW_LANE')
             # First, find the closest index to the ego vehicle.
@@ -100,15 +100,13 @@ class BehaviouralPlanner:
             self._goal_state = waypoints[goal_index]
             
 
-        # In this state, check if we have reached a complete stop. Use the
-        # closed loop speed to do so, to ensure we are actually at a complete
-        # stop, and compare to STOP_THRESHOLD.  If so, transition to the next
-        # state.
+        # In this state, check if we have reached a certain speed that we compare to STOP_THRESHOLD.
+        # If so, transition to the next state.
         elif self._state == DECELERATE_TO_TRAFFIC_LIGHT:
             print('SONO IN DECELERATE_TO_TRAFFIC_LIGHT')
             if abs(closed_loop_speed) <= STOP_THRESHOLD:
                 self._state = STAY_STOPPED_AT_TRAFFIC_LIGHT
-                self._stop_count = 0
+                
             elif (self._green_count > 10  and self._traffic_light_state == 'go') or self._red_count==0:
                 self._state = FOLLOW_LANE
                 self._red_count = 0
@@ -116,9 +114,8 @@ class BehaviouralPlanner:
                 self._traffic_flag = False
 
 
-        # In this state, check to see if we have stayed stopped for at
-        # least STOP_COUNTS number of cycles. If so, we can now leave
-        # the stop sign and transition to the next state.
+        # In this state, check to see if we have seen a certain number of Green Traffic Light
+        # If so, we can now leave and transition to the next state.
         elif self._state == STAY_STOPPED_AT_TRAFFIC_LIGHT:
             print('SONO IN STAY_STOPPED_AT_TRAFFIC_LIGHT')
 
@@ -261,6 +258,21 @@ class BehaviouralPlanner:
 
 
     def check_for_lead_vehicle_custom(self, ego_state, lead_car_position):
+         """Checks for lead vehicle within the proximity of the ego car, such
+         that the ego car should begin to follow the lead vehicle.
+
+         args:
+            ego_state: ego state vector for the vehicle. (global frame)
+                format: [ego_x, ego_y, ego_yaw, ego_open_loop_speed]
+                    ego_x and ego_y     : position (m)
+                    ego_yaw             : top-down orientation [-pi to pi]
+                    ego_open_loop_speed : open loop speed (m/s)
+            lead_car_position: The [x, y] position of the lead vehicle.
+                Lengths are in meters, and it is in the global frame.
+         returns:
+            True: whether the ego vehicle should follow the lead car or not 
+            False: otherwhise 
+         """
          # Compute the angle between the normalized vector between the lead vehicle
          # and ego vehicle position with the ego vehicle's heading vector.
          lead_car_delta_vector = [lead_car_position[0] - ego_state[0],
@@ -275,7 +287,6 @@ class BehaviouralPlanner:
          # vehicle lies within +/- 45 degrees of the ego vehicle's heading.
          if np.dot(lead_car_delta_vector,
                    ego_heading_vector) < (1 / math.sqrt(2)):
-            #print('LA MACCHINA SI TROVA DIETRO')
             return False
          print('SONO IN FOLLOW_LEAD_VEHICLE')
          return True
@@ -334,13 +345,36 @@ def pointOnSegment(p1, p2, p3):
 
 
 def check_state(self, traffic_light,stop_flag):
+    """
+    args:
+        traffic_light: list of traffic light detected with labels and confidence
+        stop_flag: flag that says if there are any obstacles on the path
+    sets:
+        self._state: The current state of the vehicle.
+            available states: 
+                FOLLOW_LANE                     : Follow the global waypoints (lane).
+                DECELERATE_TO_TRAFFIC_LIGHT     : Decelerate to stop at red traffic light.
+                STAY_STOPPED_AT_TRAFFIC_LIGHT   : Stay stopped at red traffic light.
+                STOP_AT_OBSTACLE                : Stop in front of a pedestrian
+        self._red_count: Number of red traffic light detected
+        self._green_count:  Number of green traffic light detected
+        self._traffic_flag: Flag that says the traffic light it's RED 
+        self._traffic_light_state: The state of the traffic light ('stop' or 'go')
+        self._count: Number of times that the detector doesn't see any traffic light
+                     or the traffic light is green
+        """
+    # If it has accidentally seen a red light, it is likely that the detector will not see
+    # a red light again, we use self._count to avoid such situations.
+    # Even in case it saw a red light when it was green.
     if(len(traffic_light) == 0 or traffic_light[0][0] == 'go'):
         self._count += 1
-
+    # If a greater than zero number of red lights were seen but self._count is greater than 15, 
+    # the red light counter and self._count are reset
     if self._red_count > 0 and self._count > 15:
         self._count = 0
         self._red_count = 0
 
+    #If there is any obstacle on the roas we set the state to STOP_AT_OBSTACLE
     if stop_flag == True:
         self._state = STOP_AT_OBSTACLE
 
@@ -351,7 +385,8 @@ def check_state(self, traffic_light,stop_flag):
         if (self._traffic_light_state == 'stop' and traffic_light[0][1] >= 0.25):
             self._red_count += 1
             self._count = 0
-
+            # If at least 3 red lights have been seen with some confidence 
+            # then we are sure that there is a red light on the road
             if (self._red_count > 2 and self._state != STAY_STOPPED_AT_TRAFFIC_LIGHT):
                 print('DECELERATE_TO_TRAFFIC_LIGHT')
                 self._traffic_flag = True
