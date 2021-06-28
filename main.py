@@ -49,12 +49,12 @@ model = get_model(config)
 ###############################################################################
 # CONFIGURABLE PARAMENTERS DURING EXAM
 ###############################################################################
-PLAYER_START_INDEX     = 140    #  spawn index for player
-DESTINATION_INDEX      = 133     # Setting a Destination HERE
-NUM_PEDESTRIANS        = 500    # total number of pedestrians to spawn
-NUM_VEHICLES           = 500     # total number of vehicles to spawn
-SEED_PEDESTRIANS       = 0     # seed for pedestrian spawn randomizer
-SEED_VEHICLES          = 0      # seed for vehicle spawn randomizer
+PLAYER_START_INDEX     = 24    #  spawn index for player
+DESTINATION_INDEX      = 53     # Setting a Destination HERE
+NUM_PEDESTRIANS        = 600    # total number of pedestrians to spawn
+NUM_VEHICLES           = 600     # total number of vehicles to spawn
+SEED_PEDESTRIANS       = 55     # seed for pedestrian spawn randomizer
+SEED_VEHICLES          = 55      # seed for vehicle spawn randomizer
 ###############################################################################
 
 ITER_FOR_SIM_TIMESTEP  = 10     # no. iterations to compute approx sim timestep
@@ -972,7 +972,7 @@ def exec_waypoint_nav_demo(args):
                             elif agent.HasField('pedestrian'):
                                 location = agent.pedestrian.transform.location
                                 agent_pedestrian_distance= np.sqrt((ego_state[0] - location.x)**2 + (ego_state[1] - location.y)**2)
-                                if agent_pedestrian_distance <= COLLISION_RADIUS_FOR_PEDESTRIAN:
+                                if agent_pedestrian_distance <= COLLISION_RADIUS_FOR_PEDESTRIAN and intersection_flag == False :
                                     dimension = agent.pedestrian.bounding_box.extent
                                     orientation = agent.pedestrian.transform.rotation
                                     obstacles.append(obstacle_to_world(location, dimension, orientation))
