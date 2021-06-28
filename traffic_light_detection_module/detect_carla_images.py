@@ -14,10 +14,10 @@ with open(file_path) as config_buffer:
 def detect_on_carla_image(model,carla_image):
     netout = predict_with_model_from_carla(config, model, carla_image)
 
-    plt_image = draw_boxes(carla_image, netout, config['model']['classes'])
-    resized= cv2.resize(plt_image,(400,400))
-    cv2.imshow('detected_image', resized)
-    cv2.waitKey(1)
+    #plt_image = draw_boxes(carla_image, netout, config['model']['classes'])
+    #resized= cv2.resize(plt_image,(400,400))
+    #cv2.imshow('detected_image', resized)
+    #cv2.waitKey(1)
 
     list=[]
 
