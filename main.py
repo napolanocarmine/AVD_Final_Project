@@ -149,14 +149,6 @@ INTERP_DISTANCE_RES       = 0.01 # distance between interpolated points
 CONTROLLER_OUTPUT_FOLDER = os.path.dirname(os.path.realpath(__file__)) +\
                            '/controller_output/'
 
-# Camera parameters
-camera_parameters = {}
-camera_parameters['x'] = 1.8
-camera_parameters['y'] = 0
-camera_parameters['z'] = 1.3
-camera_parameters['width'] = 200
-camera_parameters['height'] = 200
-camera_parameters['fov'] = 90
 
 def rotate_x(angle):
     R = np.mat([[ 1,         0,           0],
@@ -234,13 +226,7 @@ def make_carla_settings(args):
         WeatherId=SIMWEATHER,
         QualityLevel=args.quality_level)
 
-    # Common cameras settings
-    cam_height = camera_parameters['z'] 
-    cam_x_pos = camera_parameters['x']
-    cam_y_pos = camera_parameters['y']
-    camera_width = camera_parameters['width']
-    camera_height = camera_parameters['height']
-    camera_fov = camera_parameters['fov']
+ 
     if(TRACK_TRAFFIC_LIGHT==True):
         # Declare here your sensors
         camera0 = Camera('CameraRGB')
@@ -927,7 +913,7 @@ def exec_waypoint_nav_demo(args):
                         #Computing in meter the distance from the traffic light
                         distance_from_traffic_light = 1000 * normalized
 
-
+                #CHECK FOR OBSTACLE AVOIDANCE
                 if(OBSTACLE_AVOIDANCE == True):
                     # UPDATE HERE the obstacles list
                     if collision_flag == True:
