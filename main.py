@@ -948,7 +948,7 @@ def exec_waypoint_nav_demo(args):
                                                     lead_car_speed = [speed]
                                     elif agent_vehicle_distance <= COLLISION_RADIUS_FOR_VEHICLES_MOVING \
                                             and abs(yaw - new_ego_state) <= YAW_DIFFERENCE_FOR_VEHICLES_MOVING \
-                                            and speed >1:
+                                            and speed > 1:
 
                                         obstacles.append(obstacle_to_world(location, dimension, orientation))
                                         obstacles_type.append('vehicle_moving')
