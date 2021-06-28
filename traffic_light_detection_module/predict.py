@@ -45,6 +45,8 @@ def predict_with_model_from_file(config, model, image_path):
 
 
 def predict_with_model_from_carla(config, model, image_path):
+
+    # passing at the function the Carla image that we want to predict
     image=load_image_predict_with_carla(image_path,config['model']['image_h'], config['model']['image_w'])
 
     dummy_array = np.zeros((1, 1, 1, 1, config['model']['max_obj'], 4))
@@ -55,4 +57,5 @@ def predict_with_model_from_carla(config, model, image_path):
                           obj_threshold=config['model']['obj_thresh'],
                           nms_threshold=config['model']['nms_thresh'])
     '''
+    # return the prediction
     return model.predict([image, dummy_array])

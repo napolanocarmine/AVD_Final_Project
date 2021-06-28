@@ -84,9 +84,16 @@ class CollisionChecker:
                     collision_free = collision_free and \
                                      not np.any(collision_dists < 0)
                     
-                    if(obstacles_type[k] == 'pedestrian' and collision_free == False and i <len(paths)-5 and i > 2 ):
+                    # we check if the obstacle type is a pedestrian or a vehicle moving
+                    # in both cases we set the stopped_at_obstacles flag at True but,
+                    # For pedestrian:
+                    #               we have removed a greater number of the paths on the right to avoid pedestrians
+                    if(obstacles_type[k] == 'pedestrian' and collision_free == False and i < len(paths)-5 and i > 2 ):
                         stopped_at_obstacle = True
-                    elif obstacles_type[k] == 'vehicle_moving' and i <len(paths)-1 and i > 1 :
+
+                    #For vehicle moving:
+                    #               we have removed just a path on the right and on the left to not consider vehicles that are more distant from us
+                    elif obstacles_type[k] == 'vehicle_moving' and i < len(paths)-1 and i > 1 :
                         print('### SONO ENTRATO IN STOP PER UN VEHICLE MOVING ###')
                         stopped_at_obstacle = True
 
@@ -96,18 +103,24 @@ class CollisionChecker:
                     break
 
             collision_check_array[i] = collision_free
-        ######################### GESTIONE OFF ROAD/PEDESTRIAN ################################
+            
         count=0
         count2=0
         collision_check_array_without_off_road=np.zeros(len(paths), dtype=bool)
+
+        # we check if we have a near pedestrian or we are following a vehicle ahead of us
         if(stopped_at_obstacle == True or follow_lead_vehicle == True):
+
+            # if we are in one of two previous situations, we will set every path as False 
             for temp in collision_check_array:
                 collision_check_array_without_off_road[count2] = False
                 count2 += 1
         else:
+
+            # instead, if we are here, we will set only the two latest paths on the right and on the left as False to avoid
+            # overtaking on the left and going on the sidewalk on the right
             for temp in collision_check_array:
                 if (count> len(collision_check_array)-2 and temp == True or (count < 2 and temp == True)):
-                #if (count> len(collision_check_array)-5 and temp == True or (count < 5 and temp == True)):
                     collision_check_array_without_off_road[count]=False
                 else:
                     collision_check_array_without_off_road[count]=temp

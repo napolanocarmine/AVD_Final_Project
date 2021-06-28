@@ -23,10 +23,16 @@ def load_image_predict(image_path, image_h, image_w):
 
 def load_image_predict_with_carla(image, image_h, image_w):
 
+    # converting image from BGR to RGB
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # resizing the image to give it the correct dimension for the model
     image = cv2.resize(image, (image_h, image_w))
+
     image = image/255
+
     image = np.expand_dims(image, 0)
+    
     return image
 
 
