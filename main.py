@@ -37,6 +37,7 @@ from traffic_light_detection_module.detect_carla_images import *
 from traffic_light_detection_module.predict import *
 from behavioural_planner import *
 
+#For more details, see the PDF in the Main section
 
 ###############################################################################
 # LOADING MODEL
@@ -936,9 +937,7 @@ def exec_waypoint_nav_demo(args):
                                     new_ego_state= (ego_state[2]*180)/pi
 
                                     if(abs(yaw-new_ego_state)<=YAW_DIFFERENCE_FOR_LEAD_VEHICLES):
-                                        # if speed >=-1 and speed<=2.5:
-                                        #     obstacles.append(obstacle_to_world(location, dimension, orientation))
-                                        #     obstacles_type.append('vehicle')
+                                        
                                         if agent_vehicle_distance <= LEAD_VEHICLE_LOOKAHEAD:
                                             if(bp.check_for_lead_vehicle_custom(ego_state, [location.x, location.y])): #se il veicolo è davanti a noi
                                                 if (agent_vehicle_distance < min_distance):
