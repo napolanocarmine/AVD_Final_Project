@@ -11,6 +11,16 @@ STOP_AT_OBSTACLE = 3
 STOP_THRESHOLD = 1
 # Number of cycles before moving from stop sign.
 STOP_COUNTS = 10
+#Thresholds used to discriminate the state of the traffic light
+RED_THRESHOLD = 2
+GREEN_TRHESHOLD = 10
+COUNT_THRESHOLD = 15
+#Confidence threshold
+RED_CONFIDENCE = 0.25
+GREEN_CONFIDENCE = 0.25
+#Traffic light states
+GO = 'go'
+STOP = 'stop'
 
 
 class BehaviouralPlanner:
@@ -22,7 +32,6 @@ class BehaviouralPlanner:
         self._obstacle_on_lane              = False
         self._goal_state                    = [0.0, 0.0, 0.0]
         self._goal_index                    = 0
-        self._stop_count                    = 0
         self._lookahead_collision_index     = 0
         self._red_count                     = 0
         self._green_count                   = 0
@@ -107,7 +116,7 @@ class BehaviouralPlanner:
             if abs(closed_loop_speed) <= STOP_THRESHOLD:
                 self._state = STAY_STOPPED_AT_TRAFFIC_LIGHT
                 
-            elif (self._green_count > 10  and self._traffic_light_state == 'go') or self._red_count==0:
+            elif (self._green_count > GREEN_TRHESHOLD  and self._traffic_light_state == GO) or self._red_count==0:
                 self._state = FOLLOW_LANE
                 self._red_count = 0
                 self._green_count = 0
@@ -119,7 +128,7 @@ class BehaviouralPlanner:
         elif self._state == STAY_STOPPED_AT_TRAFFIC_LIGHT:
             print('SONO IN STAY_STOPPED_AT_TRAFFIC_LIGHT')
 
-            if ((self._green_count > 10  and self._traffic_light_state == 'go') or self._red_count==0 and
+            if ((self._green_count > GREEN_TRHESHOLD  and self._traffic_light_state == GO) or self._red_count==0 and
                     (self._state == DECELERATE_TO_TRAFFIC_LIGHT or self._state == STAY_STOPPED_AT_TRAFFIC_LIGHT)):
                 self._state = FOLLOW_LANE
                 self._red_count = 0
@@ -366,7 +375,7 @@ def check_state(self, traffic_light,stop_flag):
     # If it has accidentally seen a red light, it is likely that the detector will not see
     # a red light again, we use self._count to avoid such situations.
     # Even in case it saw a red light when it was green.
-    if(len(traffic_light) == 0 or traffic_light[0][0] == 'go'):
+    if(len(traffic_light) == 0 or traffic_light[0][0] == GO):
         self._count += 1
     # If a greater than zero number of red lights were seen but self._count is greater than 15, 
     # the red light counter and self._count are reset
@@ -382,17 +391,17 @@ def check_state(self, traffic_light,stop_flag):
 
         self._traffic_light_state = traffic_light[0][0]
 
-        if (self._traffic_light_state == 'stop' and traffic_light[0][1] >= 0.25):
+        if (self._traffic_light_state == STOP and traffic_light[0][1] >= RED_CONFIDENCE):
             self._red_count += 1
             self._count = 0
             # If at least 3 red lights have been seen with some confidence 
             # then we are sure that there is a red light on the road
-            if (self._red_count > 2 and self._state != STAY_STOPPED_AT_TRAFFIC_LIGHT):
+            if (self._red_count > RED_THRESHOLD and self._state != STAY_STOPPED_AT_TRAFFIC_LIGHT):
                 print('DECELERATE_TO_TRAFFIC_LIGHT')
                 self._traffic_flag = True
                 self._state = DECELERATE_TO_TRAFFIC_LIGHT
 
-        elif (self._traffic_flag == True and self._traffic_light_state == 'go' and traffic_light[0][1] >= 0.25):
+        elif (self._traffic_flag == True and self._traffic_light_state == GO and traffic_light[0][1] >= GREEN_CONFIDENCE):
             self._green_count += 1
   
     if self._state != STAY_STOPPED_AT_TRAFFIC_LIGHT and self._state != DECELERATE_TO_TRAFFIC_LIGHT and stop_flag == False:
